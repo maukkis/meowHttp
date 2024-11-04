@@ -1,10 +1,17 @@
 #include <cstring>
 #include <iostream>
+#include <string_view>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <stdlib.h>
+
+std::string_view parseBody(std::string_view meow){
+  size_t startPos{meow.find("\r\n\r\n") + strlen("\r\n\r\n")};
+  return meow.substr(startPos);
+}
+
 
 int main () {
   int sockfd{socket(AF_INET, SOCK_STREAM, 0)};
@@ -42,6 +49,7 @@ int main () {
       if(realloc(buffer, bufferSize + receiveSize) == 0){
         std::cout << "woof\n";
       }
+      bufferSize += receiveSize;
       std::cout << "received: " << receiveSize << " bytes\n";
       woof += receiveSize;
       strncat(buffer, buffer1, receiveSize);
@@ -55,7 +63,7 @@ int main () {
     }
   }
   buffer[woof] = '\0';
-  std::cout << buffer << '\n';
+  std::cout << parseBody(buffer) << '\n';
   free(buffer);
   free(meow);
   return 0;
