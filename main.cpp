@@ -1,5 +1,6 @@
 #include <cstring>
 #include <iostream>
+#include <sstream>
 #include <string_view>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -7,9 +8,26 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+enum HTTPCODES{
+  OK = 200,
+  NotFound = 404,
+  Unathorized = 401,
+};
+
 std::string_view parseBody(std::string_view meow){
   size_t startPos{meow.find("\r\n\r\n") + strlen("\r\n\r\n")};
   return meow.substr(startPos);
+}
+
+size_t parseStatusCode(std::string_view meow){
+  size_t startPos{0};
+  size_t endPos{meow.find("\r\n")};
+  std::string status{meow.substr(startPos, endPos)};
+  std::istringstream bark{status};
+  bark.ignore(256, ' ');
+  size_t httpStatusCode;
+  bark >> httpStatusCode;
+  return httpStatusCode; 
 }
 
 
@@ -63,6 +81,14 @@ int main () {
     }
   }
   buffer[woof] = '\0';
+  switch(parseStatusCode(buffer)){
+    case OK:
+      std::cout << "got ok!\n";
+    break;
+    case NotFound:
+      std::cout << "got not found\n";
+    break;
+    }
   std::cout << parseBody(buffer) << '\n';
   free(buffer);
   free(meow);
