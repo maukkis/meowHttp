@@ -1,0 +1,130 @@
+#include "includes/client.h"
+#include <cstring>
+#include <openssl/evp.h>
+#include <openssl/ssl.h>
+#include <sys/poll.h>
+#include <sys/socket.h>
+#include <iostream>
+#include "includes/enum.h"
+#include <unistd.h>
+#include <poll.h>
+
+meow sslSocket::initializeSsl(){
+  SSL_library_init();
+  OpenSSL_add_all_algorithms();
+  SSL_load_error_strings();
+  method = TLS_client_method(); 
+  ctx = SSL_CTX_new (method);
+  ssl = SSL_new (ctx);
+  if(!ssl){
+    log(ERROR, "failed to create ssl");
+    return ERR_SSL_FAILED;
+  }
+  return OK;
+}
+
+void sslSocket::log(enum log meow, const std::string& message){
+  std::cout << logEnumToString(meow) << " [*] " << message << '\n';  
+}
+const std::string sslSocket::logEnumToString(enum log meow){
+  switch(meow){
+    case INFO:
+      return "info";
+    break;
+    case ERROR:
+      return "error";
+    break;
+    default:
+      return "idk";
+    break;
+  }
+}
+
+size_t sslSocket::read(std::string& buf, size_t buffersize){
+  size_t recv;
+  size_t meow = 0;
+  bool read_blocked;
+  struct pollfd pfd[2];
+  while(true){
+    pfd[0].fd = sockfd;
+    pfd[0].events = POLLIN;
+    pfd[1].events = 0;
+    size_t ret = poll(pfd, 1, 300);
+    if(ret > 0){
+      if(pfd[0].revents & POLLIN){
+        do{
+          char buff[buffersize];
+          read_blocked = false;
+          recv = SSL_read(ssl, buff, buffersize);
+          int woof = SSL_get_error(ssl, recv);
+          switch(woof){
+            case SSL_ERROR_NONE:
+              if (recv > 0){
+                buf.append(buff, recv);
+                meow += recv;
+                continue;
+              }
+            break;
+            case SSL_ERROR_ZERO_RETURN:
+              std::cout << "woof\n";
+              SSL_shutdown(ssl);
+              return meow;
+            break;
+            case SSL_ERROR_WANT_READ:
+              std::cout << "want read\n";
+              read_blocked = true;
+            break;
+            default:
+              int error = SSL_get_error(ssl,recv);
+              std::cout << error << '\n';
+            break;
+          }
+        } while(SSL_pending(ssl) && !read_blocked);
+      }
+    } 
+    else if (ret == 0){
+      std::cout << "breaking we received: " << meow << " bytes\n";
+      break;
+    }
+  }
+  return meow;
+}
+
+size_t sslSocket::write(const std::string& data, size_t buffersize){
+  size_t recv;
+  recv = SSL_write(ssl, data.c_str(), buffersize);
+  return recv;
+}
+
+
+meow sslSocket::connect(const std::string& url, const std::string& protocol){
+  sockfd = socket(AF_INET, SOCK_STREAM, 0);
+  struct sockaddr_in *meow = new sockaddr_in;
+  meow->sin_port = htons(443);
+  meow->sin_family = AF_INET;
+  meow->sin_addr.s_addr = resolveHostName(url, protocol);
+  if(::connect(sockfd, (sockaddr *)meow, sizeof(*meow)) != 0){
+    log(ERROR, "failed to connect");
+    delete meow;
+    return ERR_CONNECT_FAILED;
+  }
+  delete meow;
+  return OK;
+}
+
+in_addr_t sslSocket::resolveHostName(const std::string& hostname, const std::string& protocol){
+  struct addrinfo hints;
+  struct addrinfo *result;
+  memset(&hints, 0, sizeof(hints));
+  hints.ai_family = AF_INET;
+  hints.ai_socktype = SOCK_STREAM;
+  ssize_t value;
+  if((value = getaddrinfo(hostname.c_str(), protocol.c_str(), &hints, &result)) != 0){
+    throw "failed to resolve hostname";
+  }
+  log(INFO, "resolved hostname");
+  struct sockaddr_in *woof = (struct sockaddr_in *)result->ai_addr;
+  freeaddrinfo(result);
+  return woof->sin_addr.s_addr; 
+}
+
