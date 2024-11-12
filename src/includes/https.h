@@ -2,29 +2,54 @@
 #define _HTTPS_H
 #include "client.h"
 #include "enum.h"
-class https : private sslSocket{
-public:
-  enum options{
+namespace meowHttp {
+
+  enum class options{
     URL,
     POSTFIELDS,
   };
-  https();
-  template<https::options T>
-  meow setOpt(const std::string& option){
-    switch(T){
-      case URL:
-        url = option; 
+  enum class getOptions{
+    STATUSCODE,
+  };
+  class https : private sslSocket{
+  public:
+    template<options T>
+    meow setOpt(const std::string& option){
+      switch(T){
+      case options::URL:
+          url = option; 
+        break;
+      case options::POSTFIELDS:
+          postFields = new std::string{option};
       break;
-      case POSTFIELDS:
-        log(ERROR, "TODO");
-      break;
+      }
+      return OK;
     }
-    return OK;
-  }
-  meow perform();
-private:
-  std::string url;
-
-};
-
+    template<options T>
+    meow setOpt(std::string *option){
+      switch(T){
+      case options::URL:
+          url = *option; 
+        break;
+      case options::POSTFIELDS:
+          postFields = option;
+      break;
+      }
+      return OK;
+    }
+    template<getOptions T>
+    auto getOpt(){
+      switch(T){
+      case getOptions::STATUSCODE:
+        return lastStatusCode;
+      break;
+      }
+    }
+    meow perform();
+  private:
+    std::string url;
+    std::string *postFields = nullptr;
+    size_t lastStatusCode;
+  };
+}
 #endif

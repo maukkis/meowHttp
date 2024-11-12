@@ -23,10 +23,10 @@ meow sslSocket::initializeSsl(){
   return OK;
 }
 
-void sslSocket::log(enum log meow, const std::string& message){
+inline void sslSocket::log(enum log meow, const std::string& message){
   std::cout << logEnumToString(meow) << " [*] " << message << '\n';  
 }
-const std::string sslSocket::logEnumToString(enum log meow){
+inline const std::string sslSocket::logEnumToString(enum log meow){
   switch(meow){
     case INFO:
       return "info";
@@ -40,21 +40,21 @@ const std::string sslSocket::logEnumToString(enum log meow){
   }
 }
 
-size_t sslSocket::read(std::string& buf, size_t buffersize){
+size_t sslSocket::read(std::string& buf, size_t buffersize, size_t timeout){
   size_t recv;
-  size_t meow = 0;
-  bool read_blocked;
+  size_t meow = 0; 
+  bool wantRead;
   struct pollfd pfd[2];
   while(true){
     pfd[0].fd = sockfd;
     pfd[0].events = POLLIN;
     pfd[1].events = 0;
-    size_t ret = poll(pfd, 1, 300);
+    size_t ret = poll(pfd, 1, timeout); //check if fd is readable this prevents receiving partial data
     if(ret > 0){
-      if(pfd[0].revents & POLLIN){
+      if(pfd[0].revents & POLLIN){ // if fd is readable read from it till we get an error
         do{
           char buff[buffersize];
-          read_blocked = false;
+          wantRead = false;
           recv = SSL_read(ssl, buff, buffersize);
           int woof = SSL_get_error(ssl, recv);
           switch(woof){
@@ -72,18 +72,18 @@ size_t sslSocket::read(std::string& buf, size_t buffersize){
             break;
             case SSL_ERROR_WANT_READ:
               std::cout << "want read\n";
-              read_blocked = true;
+              wantRead = true;
             break;
             default:
               int error = SSL_get_error(ssl,recv);
               std::cout << error << '\n';
             break;
           }
-        } while(SSL_pending(ssl) && !read_blocked);
+        } while(SSL_pending(ssl) && !wantRead);
       }
-    } 
+    }
     else if (ret == 0){
-      std::cout << "breaking we received: " << meow << " bytes\n";
+      std::cout << "info [*] breaking we received: " << meow << " bytes\n";
       break;
     }
   }
