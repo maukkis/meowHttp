@@ -56,10 +56,24 @@ namespace meowHttp {
     std::string request;
     size_t timeout;
     if (!postFields){
-      request = "GET " + path + " HTTP/1.1\r\nHost: " + hostname + "\r\nUser-Agent: sigma skibidi browser\r\nAccept: application/json,text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\nAccept-Language: en-US,en;q=0.5\r\nConnection: keep-alive\r\nCache-Control: max-age=0\r\n\r\n";
+      request = "GET " + path + " HTTP/1.1"
+      "\r\nHost: " + hostname + 
+      "\r\nUser-Agent: meow browser"
+      "\r\nAccept: application/json,text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+      "\r\nAccept-Language: en-US,en;q=0.5"
+      "\r\nConnection: keep-alive"
+      "\r\nCache-Control: max-age=0\r\n\r\n";
       timeout = 300;
     } else {
-      request = "POST " + path + " HTTP/1.1\r\nHost: " + hostname + "\r\nUser-Agent: sigma skibidi browser\r\nAccept: application/json,text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\nAccept-Language: en-US,en;q=0.5\r\nConnection: keep-alive\r\nCache-Control: max-age=0\r\nContent-Type: application/json\r\n" + "Content-Length: " + std::to_string(postFields->length()) + "\r\n\r\n" + *postFields;
+      request = "POST " + path + " HTTP/1.1"
+      "\r\nHost: " + hostname +
+      "\r\nUser-Agent:  meow browser"
+      "\r\nAccept: application/json,text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+      "\r\nAccept-Language: en-US,en;q=0.5"
+      "\r\nConnection: keep-alive"
+      "\r\nCache-Control: max-age=0"
+      "\r\nContent-Type: application/json"
+      "\r\nContent-Length: " + std::to_string(postFields->length()) + "\r\n\r\n" + *postFields;
       timeout = 500;
     }
     size_t sentLen = write(request.c_str(), request.length());
