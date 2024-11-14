@@ -4,52 +4,52 @@
 #include "enum.h"
 namespace meowHttp {
 
-  enum class options{
-    URL,
-    POSTFIELDS,
-  };
-  enum class getOptions{
-    STATUSCODE,
-  };
-  class https : private sslSocket{
-  public:
-    template<options T>
-    meow setOpt(const std::string& option){
-      switch(T){
-      case options::URL:
-          url = option; 
-        break;
-      case options::POSTFIELDS:
-          postFields = new std::string{option};
+enum class options{
+  URL,
+  POSTFIELDS,
+};
+enum class getOptions{
+  STATUSCODE,
+};
+class https : private sslSocket{
+public:
+  template<options T>
+  meow setOpt(const std::string& option){
+    switch(T){
+    case options::URL:
+        url = option; 
       break;
-      }
-      return OK;
+    case options::POSTFIELDS:
+        postFields = new std::string{option};
+    break;
     }
-    template<options T>
-    meow setOpt(std::string *option){
-      switch(T){
-      case options::URL:
-          url = *option; 
-        break;
-      case options::POSTFIELDS:
-          postFields = option;
+    return OK;
+  }
+  template<options T>
+  meow setOpt(std::string *option){
+    switch(T){
+    case options::URL:
+        url = *option; 
       break;
-      }
-      return OK;
+    case options::POSTFIELDS:
+        postFields = option;
+    break;
     }
-    template<getOptions T>
-    auto getOpt(){
-      switch(T){
-      case getOptions::STATUSCODE:
-        return lastStatusCode;
-      break;
-      }
+    return OK;
+  }
+  template<getOptions T>
+  auto getOpt(){
+    switch(T){
+    case getOptions::STATUSCODE:
+      return lastStatusCode;
+    break;
     }
-    meow perform();
-  private:
-    std::string url;
-    std::string *postFields = nullptr;
-    size_t lastStatusCode;
-  };
+  }
+  meow perform();
+private:
+  std::string url;
+  std::string *postFields = nullptr;
+  size_t lastStatusCode;
+};
 }
 #endif

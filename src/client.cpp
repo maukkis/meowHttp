@@ -118,7 +118,7 @@ in_addr_t sslSocket::resolveHostName(const std::string& hostname, const std::str
   hints.ai_socktype = SOCK_STREAM;
   ssize_t value;
   if((value = getaddrinfo(hostname.c_str(), protocol.c_str(), &hints, &result)) != 0){
-    throw "failed to resolve hostname";
+    return ERROR;
   }
   log(INFO, "resolved hostname");
   struct sockaddr_in *woof = (struct sockaddr_in *)result->ai_addr;
