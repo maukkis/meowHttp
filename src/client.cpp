@@ -1,5 +1,6 @@
 #include "includes/client.h"
 #include <cstring>
+#include <netinet/in.h>
 #include <openssl/evp.h>
 #include <openssl/ssl.h>
 #include <sys/poll.h>
@@ -10,9 +11,6 @@
 #include <poll.h>
 
 meow sslSocket::initializeSsl(){
-  SSL_library_init();
-  OpenSSL_add_all_algorithms();
-  SSL_load_error_strings();
   method = TLS_client_method(); 
   ctx = SSL_CTX_new (method);
   ssl = SSL_new (ctx);

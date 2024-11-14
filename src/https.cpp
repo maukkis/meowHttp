@@ -41,6 +41,7 @@ namespace meowHttp {
       log(ERROR, "failed to initializeSsl");
       throw "meoow";
     }
+    SSL_set_tlsext_host_name(ssl, hostname.c_str());
     SSL_set_fd(ssl, sockfd);
     size_t nya = SSL_connect(ssl);
     if(nya != 1){
