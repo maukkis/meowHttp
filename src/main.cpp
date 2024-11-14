@@ -9,6 +9,11 @@ int main(){
     return 1;
   }
   std::cout << "status code: " << meow.getOpt<meowHttp::getOptions::STATUSCODE>() << '\n';
+  /*
+  meowHttp::websocket websocket;
+  websocket.setOpt<meowHttp::options::URL>("https://echo.websocket.org/");
+  websocket.perform();
+  */
   return 0;
 }
 
