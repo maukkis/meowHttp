@@ -26,7 +26,7 @@ size_t parseStatusCode(std::string_view meow){
   return httpStatusCode; 
 }
 
-meow https::perform(){
+meow https::perform(size_t timeout){
   // parse url
   std::string protocol = url.substr(0, url.find("://"));
   std::string hostname = url.substr(url.find("://") + strlen("://"));
@@ -62,7 +62,6 @@ meow https::perform(){
   meow.append(SSL_get_cipher(ssl));
   log(INFO, meow);
   std::string request;
-  size_t timeout;
   if (!postFields){
     request = "GET " + path + " HTTP/1.1"
     "\r\nHost: " + hostname + 
@@ -92,9 +91,8 @@ meow https::perform(){
   log(INFO, "sent headers");
   std::string buffer;
   size_t rlen = read(buffer, 8192, timeout);
-  if(rlen < 1){
-    log(ERROR, "failed to receive");
-    return meow::ERR_RECEIVE_FAILED;
+  while(rlen < 1){
+    rlen = read(buffer, 8192, timeout);
   }
   lastStatusCode = parseStatusCode(buffer);
   std::cout << parseBody(buffer) << '\n';

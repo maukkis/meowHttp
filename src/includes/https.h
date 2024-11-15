@@ -13,6 +13,11 @@ enum class getOptions{
 };
 class https : private sslSocket{
 public:
+  ~https(){
+    if(allocated){
+      delete postFields;
+    }
+  }
   template<options T>
   meow setOpt(const std::string& option){
     switch(T){
@@ -45,11 +50,12 @@ public:
     break;
     }
   }
-  meow perform();
+  meow perform(size_t timeout = 300);
 private:
   std::string url;
   std::string *postFields = nullptr;
   size_t lastStatusCode;
+  bool allocated = false;
 };
 }
 #endif

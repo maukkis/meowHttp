@@ -3,7 +3,7 @@
 /* example code */
 int main(){
   meowHttp::https meow;
-  meow.setOpt<meowHttp::options::URL>("url here");
+  meow.setOpt<meowHttp::options::URL>("https://url.here/paws/at/you");
   if(meow.perform() != OK){
     std::cout << "failed to receive\n";
     return 1;
