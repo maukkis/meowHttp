@@ -1,19 +1,24 @@
-#include "includes/https.h"
+#include "includes/websocket.h"
+#include <cstring>
 #include <iostream>
+#include <iostream>
+#include <string>
 /* example code */
 int main(){
-  meowHttp::https meow;
-  meow.setOpt<meowHttp::options::URL>("https://url.here/paws/at/you");
-  if(meow.perform() != OK){
-    std::cout << "failed to receive\n";
+  meowWs::websocket websocket;
+  websocket.setOpt<meowWs::options::URL>("url uwu");
+  if(websocket.perform() != OK){
     return 1;
   }
-  std::cout << "status code: " << meow.getOpt<meowHttp::getOptions::STATUSCODE>() << '\n';
-  /*
-  meowHttp::websocket websocket;
-  websocket.setOpt<meowHttp::options::URL>("https://echo.websocket.org/");
-  websocket.perform();
-  */
+  websocket.wsSend("woofs at you");
+  std::string buf;
+  while(true){
+    if(websocket.wsRecv(buf, 8192) >= 1){
+      std::cout << "received data breaking\n";
+      break;
+    } 
+  }
+  std::cout << buf << '\n';
   return 0;
 }
 

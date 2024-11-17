@@ -37,6 +37,10 @@ inline const std::string sslSocket::logEnumToString(enum log meow){
     break;
   }
 }
+void sslSocket::close(){
+  SSL_shutdown(ssl);
+  ::close(sockfd);
+}
 
 size_t sslSocket::read(std::string& buf, size_t buffersize, size_t timeout){
   size_t recv;
@@ -69,19 +73,19 @@ size_t sslSocket::read(std::string& buf, size_t buffersize, size_t timeout){
               return meow;
             break;
             case SSL_ERROR_WANT_READ:
-              std::cout << "want read\n";
               wantRead = true;
             break;
             default:
               int error = SSL_get_error(ssl,recv);
               std::cout << error << '\n';
+              close();
+              return meow;
             break;
           }
         } while(SSL_pending(ssl) && !wantRead);
       }
     }
     else if (ret == 0){
-      std::cout << "info [*] breaking we received: " << meow << " bytes\n";
       break;
     }
   }

@@ -22,6 +22,7 @@ protected:
   size_t write(const std::string& data, size_t buffersize);
   void log(log meow, const std::string& message);
   const std::string logEnumToString(enum log meow);
+  void close();
   int sockfd;
   SSL *ssl;
   const SSL_METHOD *method;

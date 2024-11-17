@@ -70,7 +70,6 @@ meow https::perform(size_t timeout){
     "\r\nAccept-Language: en-US,en;q=0.5"
     "\r\nConnection: keep-alive"
     "\r\nCache-Control: max-age=0\r\n\r\n";
-    timeout = 300;
   } else {
     request = "POST " + path + " HTTP/1.1"
     "\r\nHost: " + hostname +
@@ -83,7 +82,7 @@ meow https::perform(size_t timeout){
     "\r\nContent-Length: " + std::to_string(postFields->length()) + "\r\n\r\n" + *postFields;
     timeout = 500;
   }
-  size_t sentLen = write(request.c_str(), request.length());
+  size_t sentLen = write(request, request.length());
   if(sentLen < 1){
     log(ERROR, "failed to send");
     throw "woof";
@@ -95,9 +94,8 @@ meow https::perform(size_t timeout){
     rlen = read(buffer, 8192, timeout);
   }
   lastStatusCode = parseStatusCode(buffer);
-  std::cout << parseBody(buffer) << '\n';
-  SSL_shutdown(ssl);
-  close(sockfd);
+  std::cout << buffer << '\n';
+  close(); 
   return OK;
 }
 }

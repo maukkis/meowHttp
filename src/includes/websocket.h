@@ -2,7 +2,7 @@
 #define _WEBSOCKET_H
 #include "client.h"
 #include "enum.h"
-namespace meowHttp {
+namespace meowWs {
 
 
 enum class options{
@@ -12,6 +12,8 @@ enum class options{
 class websocket : sslSocket{
 public:
   meow perform();
+  size_t wsRecv(std::string& buf, size_t bufSize);
+  size_t wsSend(const std::string& payload);
   template<options T>
   meow setOpt(const std::string& option){
     switch(T){

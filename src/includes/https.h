@@ -50,7 +50,7 @@ public:
     break;
     }
   }
-  meow perform(size_t timeout = 300);
+  meow perform(size_t timeout = 50);
 private:
   std::string url;
   std::string *postFields = nullptr;
