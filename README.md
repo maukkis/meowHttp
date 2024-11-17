@@ -4,7 +4,7 @@ a simple C++ library to send https and wss requests<br>
 - openssl
 # Usage
 ## https get request
-```c++
+```cpp
 #include "includes/https.h"
 
 int main(){
@@ -15,7 +15,7 @@ int main(){
 }
 ```
 ## https post request
-```c++
+```cpp
 #include "includes/https.h"
 
 int main(){
@@ -28,7 +28,7 @@ int main(){
 }
 ```
 ## websockets
-```c++
+```cpp
 #include "includes/websocket.h"
 #include <iostream>
 #include <string>
