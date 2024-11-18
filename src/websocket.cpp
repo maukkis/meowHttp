@@ -21,10 +21,18 @@ struct Frame{
   size_t totalLen;
 };
 
-Frame *constructFrame(const std::string& payload){
+Frame *constructFrame(const std::string& payload, opCodes opCode){
   size_t payloadLen = payload.length();
   uint8_t frame[10];
   struct Frame *frameStruct = new Frame;
+  switch(opCode){
+    case meowWS_TEXT:
+      frame[0] = 0x81; // fuck you we are only sending text not anymore!
+    break;
+    case meowWS_PING:
+      frame[0] = 0x89; //ping!
+    break;
+  }
   frame[0] = 0x81; // fuck you we are only sending text
   if (payloadLen <= 125){ // small payload owo
     frame[1] = 0x80 | payloadLen; // we set the masking bit and the payloadLen
@@ -54,8 +62,8 @@ Frame *constructFrame(const std::string& payload){
   return frameStruct;
 }
 
-size_t websocket::wsSend(const std::string& payload){
-  struct Frame *constructedFrame = constructFrame(payload);
+size_t websocket::wsSend(const std::string& payload, opCodes opCode){
+  struct Frame *constructedFrame = constructFrame(payload, opCode);
   size_t sLen = SSL_write(ssl, constructedFrame->buffer, constructedFrame->totalLen);
   free(constructedFrame->buffer);
   delete constructedFrame;

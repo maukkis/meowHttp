@@ -7,11 +7,33 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <unistd.h>
+
+
 namespace meowHttp {
 
-std::string_view parseBody(std::string_view meow){
+std::string parseHeaders(const std::string& buffer, const std::string& headerToParse){
+  size_t startpos = buffer.find(headerToParse) + headerToParse.length();
+  if (startpos != std::string::npos){
+    size_t endPos = buffer.find("\r\n", startpos);
+    return buffer.substr(startpos, endPos - startpos);
+  }
+  return "";
+}
+
+std::string parseBody(std::string meow){
   size_t startPos{meow.find("\r\n\r\n") + strlen("\r\n\r\n")};
+  if(parseHeaders(meow, "Transfer-Encoding: ") == "chunked"){
+    std::string parsedBuffer;
+    std::string woofs = meow.substr(startPos, meow.find("\r\n", startPos) - startPos);
+    std::stringstream meows;
+    size_t woof = atoi(woofs.c_str());
+    meows << woof;
+    meows >> std::hex >> woof;
+    parsedBuffer.append(meow.substr(meow.find("\r\n", startPos) + strlen("\r\n"), woof));
+    return parsedBuffer;
+  }
   return meow.substr(startPos);
 }
 
@@ -80,12 +102,11 @@ meow https::perform(size_t timeout){
     "\r\nCache-Control: max-age=0"
     "\r\nContent-Type: application/json"
     "\r\nContent-Length: " + std::to_string(postFields->length()) + "\r\n\r\n" + *postFields;
-    timeout = 500;
   }
   size_t sentLen = write(request, request.length());
   if(sentLen < 1){
     log(ERROR, "failed to send");
-    throw "woof";
+    return ERR_SEND_FAILED;
   }
   log(INFO, "sent headers");
   std::string buffer;
@@ -94,8 +115,10 @@ meow https::perform(size_t timeout){
     rlen = read(buffer, 8192, timeout);
   }
   lastStatusCode = parseStatusCode(buffer);
-  std::cout << buffer << '\n';
+  std::cout << parseBody(buffer);
   close(); 
   return OK;
 }
+
+
 }
