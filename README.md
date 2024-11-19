@@ -39,7 +39,7 @@ int main(){
   if(websocket.perform() != OK){
     return 1;
   }
-  websocket.wsSend("woofs at you");
+  websocket.wsSend("woofs at you", meowWs::meowWS_TEXT);
   std::string buf;
   while(true){
     if(websocket.wsRecv(buf, 8192) >= 1){
