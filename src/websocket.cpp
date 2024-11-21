@@ -33,7 +33,6 @@ Frame *constructFrame(const std::string& payload, opCodes opCode){
       frame[0] = 0x89; //ping!
     break;
   }
-  frame[0] = 0x81; // fuck you we are only sending text
   if (payloadLen <= 125){ // small payload owo
     frame[1] = 0x80 | payloadLen; // we set the masking bit and the payloadLen
     frameStruct->frameLen = 2;
@@ -71,7 +70,16 @@ size_t websocket::wsSend(const std::string& payload, opCodes opCode){
 }
 
 size_t websocket::wsRecv(std::string& buf, size_t bufSize){
-  size_t rlen = read(buf, bufSize, 50);
+  size_t rlen;
+  if(moreData){
+    buf = *moreData;
+    rlen = moreData->length();
+    delete moreData;
+    moreData = nullptr;
+  }
+  else{
+    rlen = read(buf, bufSize, 50);
+  }
   if(rlen < 1){
     return rlen;
   }
@@ -172,6 +180,11 @@ meow websocket::perform(){
     rlen = read(buf, 8192, 50);
   }
   if(parseStatusCode(buf) == 101){
+    if(buf.find("\r\n\r\n") + strlen("\r\n\r\n") >= buf.length()){
+      return OK;
+    }
+    moreData = new std::string;
+    *moreData = buf.substr(buf.find("\r\n\r\n") + 4);
     return OK;
   }
   return ERR_CONNECT_FAILED;

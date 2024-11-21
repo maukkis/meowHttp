@@ -6,11 +6,10 @@
 /* example code */
 int main(){
   meowWs::websocket websocket;
-  websocket.setOpt<meowWs::options::URL>("https://url.uwu");
+  websocket.setOpt<meowWs::options::URL>("https://url.uwu/meow");
   if(websocket.perform() != OK){
     return 1;
   }
-  websocket.wsSend("woofs at you", meowWs::meowWS_TEXT);
   std::string buf;
   while(true){
     if(websocket.wsRecv(buf, 8192) >= 1){

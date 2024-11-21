@@ -29,6 +29,7 @@ public:
 
 private:
   std::string url;
+  std::string *moreData = nullptr;
 };
 }
 #endif
