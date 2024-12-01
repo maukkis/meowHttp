@@ -8,8 +8,8 @@ a simple C++ library to send https and wss requests<br>
 #include "includes/https.h"
 
 int main(){
-  meowHttp::https meow;
-  meow.setOpt<meowHttp::options::URL>("https://url.com/here");
+  auto meow = meowHttp::https()
+    .setUrl("https://example.tld");
   meow.perform();
   return 0;
 }
@@ -19,10 +19,9 @@ int main(){
 #include "includes/https.h"
 
 int main(){
-  meowHttp::https meow;
-  meow.setOpt<meowHttp::options::URL>("https://url.com/here");
-  const std::string postFields = "post stuff here";
-  meow.setOpt<meowHttp::options::POSTFIELDS>(postFields);
+  auto meow = meowHttp::https()
+    .setUrl("https://url.here")
+    .setPostfields("post here");
   meow.perform();
   return 0;
 }
@@ -31,15 +30,13 @@ int main(){
 ```cpp
 #include "includes/websocket.h"
 #include <iostream>
-#include <string>
 
 int main(){
-  meowWs::websocket websocket;
-  websocket.setOpt<meowWs::options::URL>("https://url.here/path");
+  auto websocket = meowWs::Websocket()
+    .setUrl("https://url here nya");
   if(websocket.perform() != OK){
     return 1;
   }
-  websocket.wsSend("woofs at you", meowWs::meowWS_TEXT);
   std::string buf;
   while(true){
     if(websocket.wsRecv(buf, 8192) >= 1){
@@ -48,6 +45,15 @@ int main(){
     } 
   }
   std::cout << buf << '\n';
+  buf.resize(0);
+  websocket.wsSend("ping!", meowWs::meowWS_PING);
+  while(true){
+    if(websocket.wsRecv(buf, 8192) >= 1){
+      std::cout << "received data breaking\n";
+      break;
+    } 
+  }
+  std::cout << buf << '\n'; 
   return 0;
 }
 ```
