@@ -13,6 +13,23 @@
 
 namespace meowHttp {
 
+Https https() {
+    return Https();
+}
+
+Https &Https::setUrl(const std::string& url){
+  this->url = url;
+  return *this;
+}
+
+
+Https &Https::setPostfields(const std::string& post){
+  this->postFields = new std::string(post);
+  allocated = true;
+  return *this;
+}
+
+
 std::string parseHeaders(const std::string& buffer, const std::string& headerToParse){
   size_t startpos = buffer.find(headerToParse) + headerToParse.length();
   if (startpos != std::string::npos){
@@ -48,7 +65,7 @@ size_t parseStatusCode(std::string_view meow){
   return httpStatusCode; 
 }
 
-meow https::perform(size_t timeout){
+meow Https::perform(size_t timeout){
   // parse url
   std::string protocol = url.substr(0, url.find("://"));
   std::string hostname = url.substr(url.find("://") + strlen("://"));

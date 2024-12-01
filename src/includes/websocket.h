@@ -12,21 +12,12 @@ enum class options{
   URL,
   POSTFIELDS,
 };
-class websocket : sslSocket{
+class Websocket : sslSocket{
 public:
   meow perform();
   size_t wsRecv(std::string& buf, size_t bufSize);
   size_t wsSend(const std::string& payload, opCodes opCode);
-  template<options T>
-  meow setOpt(const std::string& option){
-    switch(T){
-    case options::URL:
-      url = option; 
-    break;
-    }
-    return OK;
-  }
-
+  Websocket &setUrl(const std::string& url);
 private:
   std::string url;
   std::string *moreData = nullptr;

@@ -9,6 +9,7 @@
 #include "includes/enum.h"
 #include <unistd.h>
 #include <poll.h>
+ 
 
 meow sslSocket::initializeSsl(){
   method = TLS_client_method(); 
@@ -68,7 +69,6 @@ size_t sslSocket::read(std::string& buf, size_t buffersize, size_t timeout){
               }
             break;
             case SSL_ERROR_ZERO_RETURN:
-              std::cout << "woof\n";
               SSL_shutdown(ssl);
               return meow;
             break;
@@ -99,18 +99,16 @@ size_t sslSocket::write(const std::string& data, size_t buffersize){
 }
 
 
-meow sslSocket::connect(const std::string& url, const std::string& protocol){
+meow sslSocket::connect(const std::string& url, const std::string& protocol, size_t port){
   sockfd = socket(AF_INET, SOCK_STREAM, 0);
-  struct sockaddr_in *meow = new sockaddr_in;
-  meow->sin_port = htons(443);
-  meow->sin_family = AF_INET;
-  meow->sin_addr.s_addr = resolveHostName(url, protocol);
-  if(::connect(sockfd, (sockaddr *)meow, sizeof(*meow)) != 0){
+  struct sockaddr_in meow;
+  meow.sin_port = htons(port);
+  meow.sin_family = AF_INET;
+  meow.sin_addr.s_addr = resolveHostName(url, protocol);
+  if(::connect(sockfd, (sockaddr *)&meow, sizeof(meow)) != 0){
     log(ERROR, "failed to connect");
-    delete meow;
     return ERR_CONNECT_FAILED;
   }
-  delete meow;
   return OK;
 }
 

@@ -17,7 +17,7 @@ protected:
     ERROR,
   };
   in_addr_t resolveHostName(const std::string& hostname, const std::string& protocol);
-  meow connect(const std::string& url, const std::string& protocol);
+  meow connect(const std::string& url, const std::string& protocol, size_t port = 443);
   size_t read(std::string& buf, size_t buffersize, size_t timeout);
   size_t write(const std::string& data, size_t buffersize);
   void log(log meow, const std::string& message);

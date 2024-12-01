@@ -4,52 +4,16 @@
 #include "enum.h"
 namespace meowHttp {
 
-enum class options{
-  URL,
-  POSTFIELDS,
-};
-enum class getOptions{
-  STATUSCODE,
-};
-class https : private sslSocket{
+class Https : private sslSocket{
 public:
-  ~https(){
+  ~Https(){
     if(allocated){
       delete postFields;
     }
   }
-  template<options T>
-  meow setOpt(const std::string& option){
-    switch(T){
-    case options::URL:
-        url = option; 
-      break;
-    case options::POSTFIELDS:
-        postFields = new std::string{option};
-    break;
-    }
-    return OK;
-  }
-  template<options T>
-  meow setOpt(std::string *option){
-    switch(T){
-    case options::URL:
-        url = *option; 
-      break;
-    case options::POSTFIELDS:
-        postFields = option;
-    break;
-    }
-    return OK;
-  }
-  template<getOptions T>
-  auto getOpt(){
-    switch(T){
-    case getOptions::STATUSCODE:
-      return lastStatusCode;
-    break;
-    }
-  }
+
+  Https &setUrl(const std::string& url);
+  Https &setPostfields(const std::string& post);
   meow perform(size_t timeout = 50);
 private:
   std::string url;
@@ -57,5 +21,6 @@ private:
   size_t lastStatusCode;
   bool allocated = false;
 };
+Https https();
 }
 #endif

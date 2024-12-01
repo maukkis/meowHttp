@@ -15,6 +15,15 @@
 #include <sstream>
 namespace meowWs {
 
+Websocket websocket(){
+  return Websocket();
+}
+
+Websocket &Websocket::setUrl(const std::string& url){
+  this->url = url;
+  return *this;
+}
+
 struct Frame{
   uint8_t *buffer;
   size_t frameLen;
@@ -27,7 +36,7 @@ Frame *constructFrame(const std::string& payload, opCodes opCode){
   struct Frame *frameStruct = new Frame;
   switch(opCode){
     case meowWS_TEXT:
-      frame[0] = 0x81; // fuck you we are only sending text not anymore!
+      frame[0] = 0x81; // fuck you we arent only sending text 
     break;
     case meowWS_PING:
       frame[0] = 0x89; //ping!
@@ -61,7 +70,7 @@ Frame *constructFrame(const std::string& payload, opCodes opCode){
   return frameStruct;
 }
 
-size_t websocket::wsSend(const std::string& payload, opCodes opCode){
+size_t Websocket::wsSend(const std::string& payload, opCodes opCode){
   struct Frame *constructedFrame = constructFrame(payload, opCode);
   size_t sLen = SSL_write(ssl, constructedFrame->buffer, constructedFrame->totalLen);
   free(constructedFrame->buffer);
@@ -69,7 +78,7 @@ size_t websocket::wsSend(const std::string& payload, opCodes opCode){
   return sLen;
 }
 
-size_t websocket::wsRecv(std::string& buf, size_t bufSize){
+size_t Websocket::wsRecv(std::string& buf, size_t bufSize){
   size_t rlen;
   if(moreData){
     buf = *moreData;
@@ -104,7 +113,7 @@ size_t parseStatusCode(std::string_view meow){
   bark >> httpStatusCode;
   return httpStatusCode; 
 }
-meow websocket::perform(){
+meow Websocket::perform(){
   // parse url
   std::string protocol = url.substr(0, url.find("://"));
   std::string hostname = url.substr(url.find("://") + strlen("://"));
