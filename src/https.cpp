@@ -28,11 +28,18 @@ Https &Https::setWriteData(std::string *writeData){
 }
 
 Https &Https::setPostfields(std::string *post){
+  if(allocated){
+    delete postFields;
+    allocated = false;
+  }
   postFields = post;
   return *this;
 }
 
 Https &Https::setPostfields(const std::string& post){
+  if(allocated){
+    delete postFields;
+  }
   this->postFields = new std::string(post);
   allocated = true;
   return *this;
