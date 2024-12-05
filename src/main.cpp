@@ -9,7 +9,7 @@
 int main(){
   std::string nya;
   auto meow = meowHttp::https()
-    .setUrl("https://www.gentoo.org")
+    .setUrl("https://url.uwu")
     .setWriteData(&nya);
   if(meow.perform() != OK){
     return 1;
@@ -21,7 +21,7 @@ int main(){
 /*
 int main(){
   auto websocket = meowWs::Websocket()
-    .setUrl("https://echo.websocket.org");
+    .setUrl("https://url.uwu");
   if(websocket.perform() != OK){
     return 1;
   }
