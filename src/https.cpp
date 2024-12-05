@@ -22,6 +22,10 @@ Https &Https::setUrl(const std::string& url){
   return *this;
 }
 
+Https &Https::setWriteData(std::string *writeData){
+  this->writeData = writeData;
+  return *this;
+}
 
 Https &Https::setPostfields(const std::string& post){
   this->postFields = new std::string(post);
@@ -132,7 +136,12 @@ meow Https::perform(size_t timeout){
     rlen = read(buffer, 8192, timeout);
   }
   lastStatusCode = parseStatusCode(buffer);
-  std::cout << parseBody(buffer);
+  if(writeData){
+    *writeData = parseBody(buffer);
+  }
+  else{
+    std::cout << parseBody(buffer);
+  }
   close(); 
   return OK;
 }

@@ -5,6 +5,20 @@
 /* example code */
 
 
+
+int main(){
+  std::string nya;
+  auto meow = meowHttp::https()
+    .setUrl("https://www.gentoo.org")
+    .setWriteData(&nya);
+  if(meow.perform() != OK){
+    return 1;
+  }
+  std::cout << nya << '\n';
+  return 0;
+}
+
+/*
 int main(){
   auto websocket = meowWs::Websocket()
     .setUrl("https://echo.websocket.org");
@@ -30,4 +44,4 @@ int main(){
   std::cout << buf << '\n'; 
   return 0;
 }
-
+*/
