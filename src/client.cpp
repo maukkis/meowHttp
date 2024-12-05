@@ -21,8 +21,8 @@ meow sslSocket::initializeSsl(){
   }
   return OK;
 }
-
-inline void sslSocket::log(enum log meow, const std::string& message){
+// fuck gcc
+void sslSocket::log(enum log meow, const std::string& message){
   std::cout << logEnumToString(meow) << " [*] " << message << '\n';  
 }
 inline const std::string sslSocket::logEnumToString(enum log meow){
