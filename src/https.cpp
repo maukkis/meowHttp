@@ -27,6 +27,11 @@ Https &Https::setWriteData(std::string *writeData){
   return *this;
 }
 
+Https &Https::setPostfields(std::string *post){
+  postFields = post;
+  return *this;
+}
+
 Https &Https::setPostfields(const std::string& post){
   this->postFields = new std::string(post);
   allocated = true;

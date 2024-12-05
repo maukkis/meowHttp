@@ -13,6 +13,7 @@ public:
   }
   Https &setWriteData(std::string *writeData);
   Https &setUrl(const std::string& url);
+  Https &setPostfields(std::string *post);
   Https &setPostfields(const std::string& post);
   meow perform(size_t timeout = 50);
 private:
