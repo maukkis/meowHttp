@@ -13,6 +13,8 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <sstream>
+
+
 namespace meowWs {
 
 Websocket websocket(){
@@ -39,7 +41,7 @@ Frame *constructFrame(const std::string& payload, opCodes opCode){
       frame[0] = 0x81; // fuck you we arent only sending text 
     break;
     case meowWS_PING:
-      frame[0] = 0x89; //ping!
+      frame[0] = 0x89; //set the payload to a ping
     break;
   }
   if (payloadLen <= 125){ // small payload owo
@@ -63,7 +65,7 @@ Frame *constructFrame(const std::string& payload, opCodes opCode){
   frameStruct->frameLen += sizeof(maskingKey);
   frameStruct->buffer = (uint8_t *)malloc(payloadLen + frameStruct->frameLen); // allocate enough memory to fit everything
   memcpy(frameStruct->buffer, frame, frameStruct->frameLen); // copy frame to the buffer
-  for(size_t i = 0; i < payloadLen; ++i){ // iterate over the string and add it to the buffer
+  for(size_t i{0}; i < payloadLen; ++i){ // iterate over the string and add it to the buffer
     frameStruct->buffer[frameStruct->frameLen + i] = payload[i];
   }
   frameStruct->totalLen = payloadLen + frameStruct->frameLen;
@@ -87,18 +89,22 @@ size_t Websocket::wsRecv(std::string& buf, size_t bufSize){
     moreData = nullptr;
   }
   else{
-    rlen = read(buf, bufSize, 50);
+    rlen = read(buf, bufSize);
   }
   if(rlen < 1){
     return rlen;
   }
   if(buf[1] < 126){
-    rlen = buf[1];
+    rlen -= 2;
     buf = buf.substr(2);
   }
   else if(buf[1] == 126){
-    rlen = buf[2] + buf[3];
+    rlen -= 4;
     buf = buf.substr(4);
+  }
+  else{
+    rlen -= 10;
+    buf = buf.substr(8);
   }
   return rlen;
 }
@@ -163,20 +169,21 @@ meow Websocket::perform(){
   BIO_flush(b64);
   BUF_MEM *bufferPtr;
   BIO_get_mem_ptr(b64, &bufferPtr);
-  char *b64Nonce = (char*)malloc(sizeof(char) * bufferPtr->length + 1);
+  char *b64Nonce = (char *)malloc(sizeof(char) * bufferPtr->length + 1);
   memcpy(b64Nonce, bufferPtr->data, bufferPtr->length);
   b64Nonce[bufferPtr->length - 1] = '\0';
   BUF_MEM_free(bufferPtr);
   BIO_free_all(b64);
-  std::string request = "GET " + path + " HTTP/1.1"
-  "\r\nHost: " + hostname + 
-  "\r\nUser-Agent: meow browser"
-  "\r\nAccept: application/json,text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
-  "\r\nAccept-Language: en-US,en;q=0.5"
-  "\r\nUpgrade: websocket"
-  "\r\nConnection: Upgrade"
-  "\r\nSec-WebSocket-Key: " + b64Nonce +
-  "\r\nSec-WebSocket-Version: 13\r\n\r\n";
+  std::string request { 
+    "GET " + path + " HTTP/1.1"
+    "\r\nHost: " + hostname + 
+    "\r\nUser-Agent: meow browser"
+    "\r\nAccept: */*"
+    "\r\nUpgrade: websocket"
+    "\r\nConnection: Upgrade"
+    "\r\nSec-WebSocket-Key: " + b64Nonce +
+    "\r\nSec-WebSocket-Version: 13\r\n\r\n"
+  };
   free(b64Nonce);
   // send the request
   if(write(request, request.length()) < 1){
@@ -184,11 +191,11 @@ meow Websocket::perform(){
     return ERR_SEND_FAILED;
   }
   std::string buf;
-  size_t rlen = read(buf, 8192, 50);
+  size_t rlen = read(buf);
   while(rlen < 1){
-    rlen = read(buf, 8192, 50);
+    rlen = read(buf);
   }
-  if(parseStatusCode(buf) == 101){
+  if(parseStatusCode(buf) == SWITCHING_PROTOCOLS){
     if(buf.find("\r\n\r\n") + strlen("\r\n\r\n") >= buf.length()){
       return OK;
     }

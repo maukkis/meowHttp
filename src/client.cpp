@@ -21,10 +21,11 @@ meow sslSocket::initializeSsl(){
   }
   return OK;
 }
-// fuck gcc
+
 void sslSocket::log(enum log meow, const std::string& message){
   std::cout << logEnumToString(meow) << " [*] " << message << '\n';  
 }
+
 inline const std::string sslSocket::logEnumToString(enum log meow){
   switch(meow){
     case INFO:
@@ -43,7 +44,7 @@ void sslSocket::close(){
   ::close(sockfd);
 }
 
-size_t sslSocket::read(std::string& buf, size_t buffersize, size_t timeout){
+size_t sslSocket::read(std::string& buf, size_t timeout){
   size_t recv;
   size_t meow = 0; 
   bool wantRead;
@@ -56,9 +57,9 @@ size_t sslSocket::read(std::string& buf, size_t buffersize, size_t timeout){
     if(ret > 0){
       if(pfd[0].revents & POLLIN){ // if fd is readable read from it till we get an error
         do{
-          char buff[buffersize];
+          char buff[8192];
           wantRead = false;
-          recv = SSL_read(ssl, buff, buffersize);
+          recv = SSL_read(ssl, buff, 8192);
           int woof = SSL_get_error(ssl, recv);
           switch(woof){
             case SSL_ERROR_NONE:

@@ -27,21 +27,9 @@ Https &Https::setWriteData(std::string *writeData){
   return *this;
 }
 
-Https &Https::setPostfields(std::string *post){
-  if(allocated){
-    delete postFields;
-    allocated = false;
-  }
-  postFields = post;
-  return *this;
-}
-
 Https &Https::setPostfields(const std::string& post){
-  if(allocated){
-    delete postFields;
-  }
-  this->postFields = new std::string(post);
-  allocated = true;
+  postFields = post;
+  hasPost = true;
   return *this;
 }
 
@@ -81,7 +69,7 @@ size_t parseStatusCode(std::string_view meow){
   return httpStatusCode; 
 }
 
-meow Https::perform(size_t timeout){
+meow Https::perform(){
   // parse url
   std::string protocol = url.substr(0, url.find("://"));
   std::string hostname = url.substr(url.find("://") + strlen("://"));
@@ -117,24 +105,20 @@ meow Https::perform(size_t timeout){
   meow.append(SSL_get_cipher(ssl));
   log(INFO, meow);
   std::string request;
-  if (!postFields){
+  if (!hasPost){
     request = "GET " + path + " HTTP/1.1"
     "\r\nHost: " + hostname + 
     "\r\nUser-Agent: meow browser"
-    "\r\nAccept: application/json,text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
-    "\r\nAccept-Language: en-US,en;q=0.5"
-    "\r\nConnection: keep-alive"
-    "\r\nCache-Control: max-age=0\r\n\r\n";
+    "\r\nAccept: */*\r\n\r\n";
   } else {
     request = "POST " + path + " HTTP/1.1"
     "\r\nHost: " + hostname +
     "\r\nUser-Agent:  meow browser"
-    "\r\nAccept: application/json,text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
-    "\r\nAccept-Language: en-US,en;q=0.5"
-    "\r\nConnection: keep-alive"
-    "\r\nCache-Control: max-age=0"
+    "\r\nAccept: */*"
     "\r\nContent-Type: application/json"
-    "\r\nContent-Length: " + std::to_string(postFields->length()) + "\r\n\r\n" + *postFields;
+    "\r\nContent-Length: " + std::to_string(postFields.length())
+    + "\r\n\r\n" 
+    + postFields;
   }
   size_t sentLen = write(request, request.length());
   if(sentLen < 1){
@@ -143,9 +127,9 @@ meow Https::perform(size_t timeout){
   }
   log(INFO, "sent headers");
   std::string buffer;
-  size_t rlen = read(buffer, 8192, timeout);
+  size_t rlen = read(buffer);
   while(rlen < 1){
-    rlen = read(buffer, 8192, timeout);
+    rlen = read(buffer);
   }
   lastStatusCode = parseStatusCode(buffer);
   if(writeData){
@@ -154,6 +138,9 @@ meow Https::perform(size_t timeout){
   else{
     std::cout << parseBody(buffer);
   }
+  postFields.clear();
+  postFields.shrink_to_fit();
+  hasPost = false;
   close(); 
   return OK;
 }

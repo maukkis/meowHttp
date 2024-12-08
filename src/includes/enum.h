@@ -8,6 +8,7 @@ enum meow{
   ERR_SEND_FAILED,
 };
 enum HTTPCODES{
+  SWITCHING_PROTOCOLS = 101,
   HTTP_OK = 200,
   NotFound = 404,
   Unathorized = 401,

@@ -6,22 +6,16 @@ namespace meowHttp {
 
 class Https : private sslSocket{
 public:
-  ~Https(){
-    if(allocated){
-      delete postFields;
-    }
-  }
   Https &setWriteData(std::string *writeData);
   Https &setUrl(const std::string& url);
-  Https &setPostfields(std::string *post);
   Https &setPostfields(const std::string& post);
-  meow perform(size_t timeout = 50);
+  meow perform();
 private:
   std::string url;
   std::string *writeData = nullptr;
-  std::string *postFields = nullptr;
+  std::string postFields;
   size_t lastStatusCode;
-  bool allocated = false;
+  bool hasPost = false;
 };
 Https https();
 }
