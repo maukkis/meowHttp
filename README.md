@@ -38,8 +38,9 @@ int main(){
     return 1;
   }
   std::string buf;
+  struct meowWs::meowWsFrame frame;
   while(true){
-    if(websocket.wsRecv(buf, 8192) >= 1){
+    if(websocket.wsRecv(buf, &frame) >= 1){
       std::cout << "received data breaking\n";
       break;
     } 
@@ -48,7 +49,7 @@ int main(){
   buf.resize(0);
   websocket.wsSend("ping!", meowWs::meowWS_PING);
   while(true){
-    if(websocket.wsRecv(buf, 8192) >= 1){
+    if(websocket.wsRecv(buf, &frame) >= 1){
       std::cout << "received data breaking\n";
       break;
     } 

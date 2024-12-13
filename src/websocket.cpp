@@ -21,6 +21,10 @@ Websocket websocket(){
   return Websocket();
 }
 
+Websocket::~Websocket(){
+  close();
+}
+
 Websocket &Websocket::setUrl(const std::string& url){
   this->url = url;
   return *this;
@@ -42,6 +46,12 @@ Frame *constructFrame(const std::string& payload, opCodes opCode){
     break;
     case meowWS_PING:
       frame[0] = 0x89; //set the payload to a ping
+    break;
+    case meowWS_PONG:
+      frame[0] = 0x8A;
+    break;
+    case meowWS_CLOSE:
+      frame[0] = 0x88;
     break;
   }
   if (payloadLen <= 125){ // small payload owo
@@ -80,7 +90,7 @@ size_t Websocket::wsSend(const std::string& payload, opCodes opCode){
   return sLen;
 }
 
-size_t Websocket::wsRecv(std::string& buf, size_t bufSize){
+size_t Websocket::wsRecv(std::string& buf, struct meowWsFrame *frame){
   size_t rlen;
   if(moreData){
     buf = *moreData;
@@ -89,11 +99,25 @@ size_t Websocket::wsRecv(std::string& buf, size_t bufSize){
     moreData = nullptr;
   }
   else{
-    rlen = read(buf, bufSize);
+    rlen = read(buf);
   }
   if(rlen < 1){
     return rlen;
   }
+  switch(static_cast<uint8_t>(buf[0])){
+      case 0x81:
+        frame->opCode = meowWS_TEXT;
+      break;
+      case 0x88:
+        frame->opCode = meowWS_CLOSE;
+      break;
+      case 0x89:
+        frame->opCode = meowWS_PING;
+      break;
+      case 0x8A:
+        frame->opCode = meowWS_PONG;
+      break;
+    }
   if(buf[1] < 126){
     rlen -= 2;
     buf = buf.substr(2);

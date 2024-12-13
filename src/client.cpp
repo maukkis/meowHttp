@@ -39,9 +39,13 @@ inline const std::string sslSocket::logEnumToString(enum log meow){
     break;
   }
 }
+
+
 void sslSocket::close(){
   SSL_shutdown(ssl);
   ::close(sockfd);
+  SSL_CTX_free(ctx);
+  SSL_free(ssl);
 }
 
 size_t sslSocket::read(std::string& buf, size_t timeout){

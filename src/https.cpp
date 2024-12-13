@@ -29,10 +29,12 @@ Https &Https::setWriteData(std::string *writeData){
 
 Https &Https::setPostfields(const std::string& post){
   postFields = post;
-  hasPost = true;
   return *this;
 }
 
+enum HTTPCODES Https::getLastStatusCode(){
+  return static_cast<HTTPCODES>(lastStatusCode);
+}
 
 std::string parseHeaders(const std::string& buffer, const std::string& headerToParse){
   size_t startpos = buffer.find(headerToParse) + headerToParse.length();
@@ -105,20 +107,21 @@ meow Https::perform(){
   meow.append(SSL_get_cipher(ssl));
   log(INFO, meow);
   std::string request;
-  if (!hasPost){
+  if (!postFields){
     request = "GET " + path + " HTTP/1.1"
     "\r\nHost: " + hostname + 
     "\r\nUser-Agent: meow browser"
     "\r\nAccept: */*\r\n\r\n";
-  } else {
+  }
+  else {
     request = "POST " + path + " HTTP/1.1"
     "\r\nHost: " + hostname +
     "\r\nUser-Agent:  meow browser"
     "\r\nAccept: */*"
     "\r\nContent-Type: application/json"
-    "\r\nContent-Length: " + std::to_string(postFields.length())
+    "\r\nContent-Length: " + std::to_string(postFields->length())
     + "\r\n\r\n" 
-    + postFields;
+    + *postFields;
   }
   size_t sentLen = write(request, request.length());
   if(sentLen < 1){
@@ -138,9 +141,11 @@ meow Https::perform(){
   else{
     std::cout << parseBody(buffer);
   }
-  postFields.clear();
-  postFields.shrink_to_fit();
-  hasPost = false;
+  if(postFields){
+    postFields->resize(0);
+    postFields->shrink_to_fit();
+    postFields.reset();
+  }
   close(); 
   return OK;
 }
