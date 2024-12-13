@@ -2,7 +2,7 @@
 
 int main(){
   auto websocket = meowWs::Websocket()
-    .setUrl("https://echo.websocket.org/");
+    .setUrl("https://echo.girlsmell.xyz/");
   if(websocket.perform() != OK){
     return 1;
   }
