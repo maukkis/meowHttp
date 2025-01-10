@@ -48,7 +48,7 @@ void sslSocket::close(){
   SSL_free(ssl);
 }
 
-size_t sslSocket::read(std::string& buf, size_t timeout){
+size_t sslSocket::read(std::string& buf){
   size_t recv;
   size_t meow = 0; 
   bool wantRead;
@@ -57,7 +57,7 @@ size_t sslSocket::read(std::string& buf, size_t timeout){
     pfd[0].fd = sockfd;
     pfd[0].events = POLLIN;
     pfd[1].events = 0;
-    size_t ret = poll(pfd, 1, timeout); //check if fd is readable this prevents receiving partial data
+    size_t ret = poll(pfd, 1, 50); //check if fd is readable this prevents receiving partial data
     if(ret > 0){
       if(pfd[0].revents & POLLIN){ // if fd is readable read from it till we get an error
         do{
