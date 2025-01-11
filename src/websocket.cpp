@@ -38,7 +38,7 @@ struct Frame{
 
 Frame *constructFrame(const std::string& payload, opCodes opCode){
   size_t payloadLen = payload.length();
-  uint8_t frame[10];
+  uint8_t frame[14];
   struct Frame *frameStruct = new Frame;
   switch(opCode){
     case meowWS_TEXT:
