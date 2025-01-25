@@ -51,9 +51,7 @@ std::string parseBody(std::string meow){
     std::string parsedBuffer;
     std::string woofs = meow.substr(startPos, meow.find("\r\n", startPos) - startPos);
     std::stringstream meows;
-    size_t woof = atoi(woofs.c_str());
-    meows << woof;
-    meows >> std::hex >> woof;
+    size_t woof = std::stoul(woofs, nullptr, 16);
     parsedBuffer.append(meow.substr(meow.find("\r\n", startPos) + strlen("\r\n"), woof));
     return parsedBuffer;
   }

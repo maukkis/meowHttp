@@ -8,10 +8,6 @@ int main(){
   }
   struct meowWs::meowWsFrame frame;
   std::string buf;
-  if(websocket.wsRecv(buf, &frame) < 1){
-    return 1;
-  }
-  buf.clear();
   constexpr char payload[] = "mrrrp mrpp meoow!";
   if(websocket.wsSend(payload, meowWs::meowWS_PING) < 1){
     return 1;

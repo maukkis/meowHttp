@@ -42,10 +42,11 @@ inline const std::string sslSocket::logEnumToString(enum log meow){
 
 
 void sslSocket::close(){
-  SSL_shutdown(ssl);
-  ::close(sockfd);
-  SSL_CTX_free(ctx);
-  SSL_free(ssl);
+  if(ssl){
+    SSL_shutdown(ssl);
+    SSL_CTX_free(ctx);
+    SSL_free(ssl);
+  }
 }
 
 size_t sslSocket::read(std::string& buf){
