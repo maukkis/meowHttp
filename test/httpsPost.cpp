@@ -1,5 +1,4 @@
 #include "../src/includes/https.h"
-#include <iostream>
 
 int main(){
   std::string writeData;
@@ -11,7 +10,6 @@ int main(){
   if(https.perform() != OK || https.getLastStatusCode() != HTTP_OK){
     return 1;
   }
-  std::cout << writeData << '\n';
   size_t pos = writeData.find(postData);
   if(pos != std::string::npos){
     writeData = writeData.substr(pos);

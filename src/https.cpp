@@ -17,6 +17,7 @@ Https https() {
     return Https();
 }
 
+
 Https &Https::setUrl(const std::string& url){
   this->url = url;
   return *this;

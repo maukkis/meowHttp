@@ -26,6 +26,7 @@ class Websocket : sslSocket{
 public:
   ~Websocket();
   meow perform();
+  meow wsClose(const size_t closeCode = 1000, const std::string aa = "");
   size_t wsRecv(std::string& buf, struct meowWsFrame *frame);
   size_t wsSend(const std::string& payload, opCodes opCode);
   Websocket &setUrl(const std::string& url);

@@ -5,11 +5,13 @@
 #include <cstring>
 #include <endian.h>
 #include <iostream>
+#include <netinet/in.h>
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include <openssl/ssl.h>
+#include <string>
 #include <unistd.h>
 #include <stdio.h>
 #include <sstream>
@@ -17,12 +19,25 @@
 
 namespace meowWs {
 
+meow Websocket::wsClose(const size_t closeCode, const std::string aa){
+  if(!ssl) return ERR_ALREADY_CLOSED;
+  uint16_t beClose = htons(closeCode);
+  if(aa.length() > 127) return ERR_TOO_LARGE_CLOSE; 
+  std::string payload = std::to_string(beClose) + aa;
+  size_t slen = wsSend(payload, meowWS_CLOSE);
+  if(slen == payload.length()) {
+    close();
+    return OK;
+  }
+  return ERR_SEND_FAILED;
+}
+
 Websocket websocket(){
   return Websocket();
 }
 
 Websocket::~Websocket(){
-  close();
+  wsClose();
 }
 
 Websocket &Websocket::setUrl(const std::string& url){
@@ -70,14 +85,12 @@ Frame *constructFrame(const std::string& payload, opCodes opCode){
     memcpy(&frame[2], &len, 8);
     frameStruct->frameLen = 10;
   }
-  uint8_t maskingKey[4] = {0x00, 0x00, 0x00, 0x00}; // fuck you again we arent masking anything
+  constexpr uint8_t maskingKey[4] = {0x00, 0x00, 0x00, 0x00}; // fuck you again we arent masking anything
   memcpy(&frame[frameStruct->frameLen], maskingKey, sizeof(maskingKey)); // copy the masking key to the frame
   frameStruct->frameLen += sizeof(maskingKey);
   frameStruct->buffer = (uint8_t *)malloc(payloadLen + frameStruct->frameLen); // allocate enough memory to fit everything
   memcpy(frameStruct->buffer, frame, frameStruct->frameLen); // copy frame to the buffer
-  for(size_t i{0}; i < payloadLen; ++i){ // iterate over the string and add it to the buffer
-    frameStruct->buffer[frameStruct->frameLen + i] = payload[i];
-  }
+  memcpy(&frameStruct->buffer[frameStruct->frameLen], payload.data(), payloadLen);
   frameStruct->totalLen = payloadLen + frameStruct->frameLen;
   return frameStruct;
 }

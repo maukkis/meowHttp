@@ -23,7 +23,7 @@ meow sslSocket::initializeSsl(){
 }
 
 void sslSocket::log(enum log meow, const std::string& message){
-  std::cout << logEnumToString(meow) << " [*] " << message << '\n';  
+  if(bark) std::cout << logEnumToString(meow) << " [*] " << message << '\n';  
 }
 
 inline const std::string sslSocket::logEnumToString(enum log meow){
@@ -46,13 +46,15 @@ void sslSocket::close(){
     SSL_shutdown(ssl);
     SSL_CTX_free(ctx);
     SSL_free(ssl);
+    ssl = nullptr;
   }
+  ::close(sockfd);
 }
 
 size_t sslSocket::read(std::string& buf){
   size_t recv;
   size_t meow = 0; 
-  bool wantRead;
+  bool bark;
   struct pollfd pfd[2];
   while(true){
     pfd[0].fd = sockfd;
@@ -63,7 +65,7 @@ size_t sslSocket::read(std::string& buf){
       if(pfd[0].revents & POLLIN){ // if fd is readable read from it till we get an error
         do{
           char buff[8192];
-          wantRead = false;
+          bark = false;
           recv = SSL_read(ssl, buff, 8192);
           int woof = SSL_get_error(ssl, recv);
           switch(woof){
@@ -75,11 +77,11 @@ size_t sslSocket::read(std::string& buf){
               }
             break;
             case SSL_ERROR_ZERO_RETURN:
-              SSL_shutdown(ssl);
+              close();
               return meow;
             break;
             case SSL_ERROR_WANT_READ:
-              wantRead = true;
+              bark = true;
             break;
             default:
               int error = SSL_get_error(ssl,recv);
@@ -88,7 +90,7 @@ size_t sslSocket::read(std::string& buf){
               return meow;
             break;
           }
-        } while(SSL_pending(ssl) && !wantRead);
+        } while(SSL_pending(ssl) && !bark);
       }
     }
     else if (ret == 0){
