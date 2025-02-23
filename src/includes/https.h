@@ -8,6 +8,7 @@ namespace meowHttp {
 
 class Https : private sslSocket{
 public:
+  using sslSocket::enableLogging;
   Https &setWriteData(std::string *writeData);
   Https &setUrl(const std::string& url);
   Https &setPostfields(const std::string& post);

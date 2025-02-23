@@ -19,11 +19,11 @@
 
 namespace meowWs {
 
-meow Websocket::wsClose(const size_t closeCode, const std::string aa){
+meow Websocket::wsClose(const size_t closeCode, const std::string& aa){
   if(!ssl) return ERR_ALREADY_CLOSED;
   uint16_t beClose = htons(closeCode);
   if(aa.length() > 127) return ERR_TOO_LARGE_CLOSE; 
-  std::string payload = std::to_string(beClose) + aa;
+  const std::string payload = std::to_string(beClose) + aa;
   size_t slen = wsSend(payload, meowWS_CLOSE);
   if(slen == payload.length()) {
     close();
