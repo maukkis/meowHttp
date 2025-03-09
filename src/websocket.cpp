@@ -5,6 +5,7 @@
 #include <cstring>
 #include <endian.h>
 #include <iostream>
+#include <memory>
 #include <netinet/in.h>
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
@@ -46,15 +47,15 @@ Websocket &Websocket::setUrl(const std::string& url){
 }
 
 struct Frame{
-  uint8_t *buffer;
+  std::unique_ptr<uint8_t[]> buffer;
   size_t frameLen;
   size_t totalLen;
 };
 
-Frame *constructFrame(const std::string& payload, opCodes opCode){
+std::unique_ptr<Frame> constructFrame(const std::string& payload, opCodes opCode){
   size_t payloadLen = payload.length();
   uint8_t frame[14];
-  struct Frame *frameStruct = new Frame;
+  auto frameStruct = std::make_unique<Frame>();
   switch(opCode){
     case meowWS_TEXT:
       frame[0] = 0x81; // fuck you we arent only sending text 
@@ -88,18 +89,16 @@ Frame *constructFrame(const std::string& payload, opCodes opCode){
   constexpr uint8_t maskingKey[4] = {0x00, 0x00, 0x00, 0x00}; // fuck you again we arent masking anything
   memcpy(&frame[frameStruct->frameLen], maskingKey, sizeof(maskingKey)); // copy the masking key to the frame
   frameStruct->frameLen += sizeof(maskingKey);
-  frameStruct->buffer = (uint8_t *)malloc(payloadLen + frameStruct->frameLen); // allocate enough memory to fit everything
-  memcpy(frameStruct->buffer, frame, frameStruct->frameLen); // copy frame to the buffer
+  frameStruct->buffer = std::make_unique<uint8_t[]>(payloadLen + frameStruct->frameLen); // allocate enough memory to fit everything
+  memcpy(frameStruct->buffer.get(), frame, frameStruct->frameLen); // copy frame to the buffer
   memcpy(&frameStruct->buffer[frameStruct->frameLen], payload.data(), payloadLen);
   frameStruct->totalLen = payloadLen + frameStruct->frameLen;
   return frameStruct;
 }
 
 size_t Websocket::wsSend(const std::string& payload, opCodes opCode){
-  struct Frame *constructedFrame = constructFrame(payload, opCode);
-  size_t sLen = SSL_write(ssl, constructedFrame->buffer, constructedFrame->totalLen);
-  free(constructedFrame->buffer);
-  delete constructedFrame;
+  auto constructedFrame = constructFrame(payload, opCode);
+  size_t sLen = SSL_write(ssl, constructedFrame->buffer.get(), constructedFrame->totalLen);
   return sLen;
 }
 
