@@ -42,7 +42,7 @@ std::string parseHeaders(const std::string& buffer, const std::string& headerToP
   return "";
 }
 
-std::string parseBody(std::string meow){
+std::string parseBody(const std::string& meow){
   size_t startPos{meow.find("\r\n\r\n") + strlen("\r\n\r\n")};
   if(parseHeaders(meow, "Transfer-Encoding: ") == "chunked"){
     std::string parsedBuffer;

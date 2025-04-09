@@ -49,7 +49,7 @@ struct Frame{
   size_t totalLen;
 };
 
-std::unique_ptr<Frame> constructFrame(const std::string& payload, opCodes opCode){
+std::unique_ptr<Frame> constructFrame(const std::string& payload, opcodes opCode){
   size_t payloadLen = payload.length();
   uint8_t frame[14];
   auto frameStruct = std::make_unique<Frame>();
@@ -93,7 +93,7 @@ std::unique_ptr<Frame> constructFrame(const std::string& payload, opCodes opCode
   return frameStruct;
 }
 
-size_t Websocket::wsSend(const std::string& payload, opCodes opCode){
+size_t Websocket::wsSend(const std::string& payload, opcodes opCode){
   auto constructedFrame = constructFrame(payload, opCode);
   size_t sLen = SSL_write(ssl, constructedFrame->buffer.get(), constructedFrame->totalLen);
   return sLen;
@@ -115,16 +115,16 @@ size_t Websocket::wsRecv(std::string& buf, struct meowWsFrame *frame){
   }
   switch(static_cast<uint8_t>(buf[0])){
       case 0x81:
-        frame->opCode = meowWS_TEXT;
+        frame->opcode = meowWS_TEXT;
       break;
       case 0x88:
-        frame->opCode = meowWS_CLOSE;
+        frame->opcode = meowWS_CLOSE;
       break;
       case 0x89:
-        frame->opCode = meowWS_PING;
+        frame->opcode = meowWS_PING;
       break;
       case 0x8A:
-        frame->opCode = meowWS_PONG;
+        frame->opcode = meowWS_PONG;
       break;
     }
   if(buf[1] < 126){

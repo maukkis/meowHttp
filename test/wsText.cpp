@@ -17,7 +17,7 @@ int main(){
       break;
     }
   }
-  if(frame.opCode == meowWs::meowWS_TEXT && buf == payload){
+  if(frame.opcode == meowWs::meowWS_TEXT && buf == payload){
     return 0;
   }
   return 1;
