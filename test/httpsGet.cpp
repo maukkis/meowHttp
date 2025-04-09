@@ -2,7 +2,7 @@
 #include <string>
 
 int main(){
-  auto https = meowHttp::https()
+  auto https = meowHttp::Https()
     .setUrl("https://echo.girlsmell.xyz");
   if(https.perform() != OK){
     return 1;

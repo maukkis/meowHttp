@@ -8,7 +8,7 @@ a simple C++ library to send https and wss requests<br>
 #include "includes/https.h"
 
 int main(){
-  auto meow = meowHttp::https()
+  auto meow = meowHttp::Https()
     .setUrl("https://example.tld");
   meow.perform();
   return 0;
@@ -19,7 +19,7 @@ int main(){
 #include "includes/https.h"
 
 int main(){
-  auto meow = meowHttp::https()
+  auto meow = meowHttp::Https()
     .setUrl("https://url.here")
     .setPostfields("post here");
   meow.perform();

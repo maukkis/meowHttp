@@ -20,6 +20,5 @@ private:
   std::optional<std::string> postFields;
   size_t lastStatusCode;
 };
-Https https();
 }
 #endif

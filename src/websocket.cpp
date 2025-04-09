@@ -33,9 +33,6 @@ meow Websocket::wsClose(const size_t closeCode, const std::string& aa){
   return ERR_SEND_FAILED;
 }
 
-Websocket websocket(){
-  return Websocket();
-}
 
 Websocket::~Websocket(){
   wsClose();

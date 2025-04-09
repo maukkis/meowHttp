@@ -3,7 +3,7 @@
 int main(){
   std::string writeData;
   const char postData[] = "mrrp mrrp mraoow!";
-  auto https = meowHttp::https()
+  auto https = meowHttp::Https()
     .setUrl("https://echo.girlsmell.xyz")
     .setPostfields(postData)
     .setWriteData(&writeData);
