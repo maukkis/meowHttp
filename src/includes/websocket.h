@@ -2,6 +2,7 @@
 #define _WEBSOCKET_H
 #include "client.h"
 #include "enum.h"
+#include <cstdint>
 namespace meowWs {
 
 
@@ -27,7 +28,7 @@ public:
   using sslSocket::enableLogging;
   ~Websocket();
   meow perform();
-  meow wsClose(const size_t closeCode = 1000, const std::string& aa = "");
+  meow wsClose(const uint16_t closeCode = 1000, const std::string& aa = "");
   size_t wsRecv(std::string& buf, struct meowWsFrame *frame);
   size_t wsSend(const std::string& payload, opcodes opCode);
   Websocket &setUrl(const std::string& url);

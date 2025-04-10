@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <endian.h>
+#include <iomanip>
 #include <iostream>
 #include <memory>
 #include <netinet/in.h>
@@ -13,25 +14,13 @@
 #include <openssl/rand.h>
 #include <openssl/ssl.h>
 #include <string>
+#include <type_traits>
 #include <unistd.h>
 #include <stdio.h>
 #include <sstream>
 
 
 namespace meowWs {
-
-meow Websocket::wsClose(const size_t closeCode, const std::string& aa){
-  if(!ssl) return ERR_ALREADY_CLOSED;
-  uint16_t beClose = htons(closeCode);
-  if(aa.length() > 127) return ERR_TOO_LARGE_CLOSE; 
-  const std::string payload = std::to_string(beClose) + aa;
-  size_t slen = wsSend(payload, meowWS_CLOSE);
-  if(slen == payload.length()) {
-    close();
-    return OK;
-  }
-  return ERR_SEND_FAILED;
-}
 
 
 Websocket::~Websocket(){
@@ -49,8 +38,8 @@ struct Frame{
   size_t totalLen;
 };
 
-std::unique_ptr<Frame> constructFrame(const std::string& payload, opcodes opCode){
-  size_t payloadLen = payload.length();
+template<typename T>
+std::unique_ptr<Frame> constructFrame(const T* payload, opcodes opCode, size_t payloadLen){
   uint8_t frame[14];
   auto frameStruct = std::make_unique<Frame>();
   switch(opCode){
@@ -88,13 +77,33 @@ std::unique_ptr<Frame> constructFrame(const std::string& payload, opcodes opCode
   frameStruct->frameLen += sizeof(maskingKey);
   frameStruct->buffer = std::make_unique<uint8_t[]>(payloadLen + frameStruct->frameLen); // allocate enough memory to fit everything
   memcpy(frameStruct->buffer.get(), frame, frameStruct->frameLen); // copy frame to the buffer
-  memcpy(&frameStruct->buffer[frameStruct->frameLen], payload.data(), payloadLen);
+  if constexpr(std::is_same_v<T, std::string>)
+    memcpy(&frameStruct->buffer[frameStruct->frameLen], payload->data(), payloadLen);
+  else
+    memcpy(&frameStruct->buffer[frameStruct->frameLen], payload, payloadLen);
   frameStruct->totalLen = payloadLen + frameStruct->frameLen;
   return frameStruct;
 }
 
+meow Websocket::wsClose(const uint16_t closeCode, const std::string& aa){
+  if(!ssl) return ERR_ALREADY_CLOSED;
+  uint16_t beClose = htons(closeCode);
+  if(aa.length() > 127) return ERR_TOO_LARGE_CLOSE; 
+  auto payload = std::make_unique<uint8_t[]>(2 + aa.length());
+  memcpy(payload.get(), &beClose, 2);
+  memcpy(&payload[2], aa.data(), aa.length());
+  auto frame = constructFrame(payload.get(), meowWS_CLOSE, 2 + aa.length());
+  size_t slen = SSL_write(ssl, frame->buffer.get(), frame->totalLen);
+  if(slen == frame->totalLen) {
+    close();
+    std::cout << "arf!\n" << frame->totalLen << '\n';
+    return OK;
+  }
+  return ERR_SEND_FAILED;
+}
+
 size_t Websocket::wsSend(const std::string& payload, opcodes opCode){
-  auto constructedFrame = constructFrame(payload, opCode);
+  auto constructedFrame = constructFrame(&payload, opCode, payload.length());
   size_t sLen = SSL_write(ssl, constructedFrame->buffer.get(), constructedFrame->totalLen);
   return sLen;
 }
