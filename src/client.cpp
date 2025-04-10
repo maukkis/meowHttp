@@ -85,7 +85,7 @@ size_t sslSocket::read(std::string& buf){
             break;
             default:
               int error = SSL_get_error(ssl,recv);
-              std::cout << error << '\n';
+              std::cout << "error: " <<error << '\n';
               close();
               return meow;
             break;

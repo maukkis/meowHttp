@@ -4,7 +4,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <endian.h>
-#include <iomanip>
 #include <iostream>
 #include <memory>
 #include <netinet/in.h>
@@ -96,7 +95,6 @@ meow Websocket::wsClose(const uint16_t closeCode, const std::string& aa){
   size_t slen = SSL_write(ssl, frame->buffer.get(), frame->totalLen);
   if(slen == frame->totalLen) {
     close();
-    std::cout << "arf!\n" << frame->totalLen << '\n';
     return OK;
   }
   return ERR_SEND_FAILED;
