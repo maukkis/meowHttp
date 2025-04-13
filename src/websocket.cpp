@@ -78,8 +78,11 @@ std::unique_ptr<Frame> constructFrame(const T* payload, opcodes opCode, size_t p
   memcpy(frameStruct->buffer.get(), frame, frameStruct->frameLen); // copy frame to the buffer
   if constexpr (std::is_same_v<T, std::string>)
     memcpy(&frameStruct->buffer[frameStruct->frameLen], payload->data(), payloadLen);
-  else
-    memcpy(&frameStruct->buffer[frameStruct->frameLen], payload, payloadLen);
+  else {
+    for(size_t i = 0; i < payloadLen; ++i){
+      frameStruct->buffer[frameStruct->frameLen + i] = payload[i];
+    }
+  }
   frameStruct->totalLen = payloadLen + frameStruct->frameLen;
   return frameStruct;
 }
