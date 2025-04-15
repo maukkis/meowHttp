@@ -29,6 +29,16 @@ Https &Https::setPostfields(const std::string& post){
   return *this;
 }
 
+Https &Https::setHeader(const std::string& header){
+  headers.emplace_back(header);
+  return *this;
+}
+
+Https &Https::setCustomMethod(const std::string& method){
+  customMethod = method;
+  return *this;
+}
+
 enum HTTPCODES Https::getLastStatusCode(){
   return static_cast<HTTPCODES>(lastStatusCode);
 }
@@ -102,11 +112,34 @@ meow Https::perform(){
   meow.append(SSL_get_cipher(ssl));
   log(INFO, meow);
   std::string request;
-  if (!postFields){
+  if (!postFields && !customMethod){
     request = "GET " + path + " HTTP/1.1"
     "\r\nHost: " + hostname + 
     "\r\nUser-Agent: meow browser"
-    "\r\nAccept: */*\r\n\r\n";
+    "\r\nAccept: */*";
+    if(!headers.empty()){
+      for(const auto& a : headers){
+        request.append("\r\n" + a);
+      }
+    }
+    request += "\r\n\r\n";
+  }
+  else if(customMethod){
+    request = *customMethod + ' ' + path + " HTTP/1.1"
+    "\r\nHost: " + hostname + 
+    "\r\nUser-Agent: meow browser"
+    "\r\nAccept: */*";
+    if(!headers.empty()){
+      for(const auto& a : headers){
+        request.append("\r\n" + a);
+      }
+    }
+    if(postFields){
+      request += "\r\nContent-Length: " + std::to_string(postFields->length()) + "\r\n\r\n" + *postFields;
+    }
+    else {
+      request.append("\r\n\r\n");
+    }
   }
   else {
     request = "POST " + path + " HTTP/1.1"
@@ -114,7 +147,13 @@ meow Https::perform(){
     "\r\nUser-Agent:  meow browser"
     "\r\nAccept: */*"
     "\r\nContent-Type: application/json"
-    "\r\nContent-Length: " + std::to_string(postFields->length())
+    "\r\nContent-Length: " + std::to_string(postFields->length());
+    if(!headers.empty()){
+      for(const auto& a : headers){
+        request.append("\r\n" + a);
+      }
+    }
+    request +=
     + "\r\n\r\n" 
     + *postFields;
   }
