@@ -1,5 +1,7 @@
 #include "includes/client.h"
+#include <cerrno>
 #include <cstring>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <openssl/evp.h>
 #include <openssl/ssl.h>
@@ -131,8 +133,8 @@ in_addr_t sslSocket::resolveHostName(const std::string& hostname, const std::str
     return ERROR;
   }
   log(INFO, "resolved hostname");
-  struct sockaddr_in *woof = (struct sockaddr_in *)result->ai_addr;
+  struct sockaddr_in woof = *(struct sockaddr_in *)result->ai_addr;
   freeaddrinfo(result);
-  return woof->sin_addr.s_addr; 
+  return woof.sin_addr.s_addr; 
 }
 
