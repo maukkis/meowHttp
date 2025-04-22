@@ -105,6 +105,7 @@ meow Websocket::wsClose(const uint16_t closeCode, const std::string& aa){
     close();
     return OK;
   }
+  close();
   return ERR_SEND_FAILED;
 }
 
