@@ -1,5 +1,6 @@
 #include "includes/client.h"
 #include <cerrno>
+#include <chrono>
 #include <cstring>
 #include <netdb.h>
 #include <netinet/in.h>
@@ -9,6 +10,7 @@
 #include <sys/socket.h>
 #include <iostream>
 #include "includes/enum.h"
+#include <thread>
 #include <unistd.h>
 #include <poll.h>
  
@@ -87,7 +89,7 @@ size_t sslSocket::read(std::string& buf){
             break;
             default:
               int error = SSL_get_error(ssl,recv);
-              std::cout << "error: " <<error << '\n';
+              std::cout << "error: " << error << '\n';
               close();
               return meow;
             break;
@@ -102,10 +104,22 @@ size_t sslSocket::read(std::string& buf){
   return meow;
 }
 
-size_t sslSocket::write(const std::string& data, size_t buffersize){
-  size_t recv;
-  recv = SSL_write(ssl, data.c_str(), buffersize);
-  return recv;
+ssize_t sslSocket::write(const std::string& data, ssize_t buffersize){
+  ssize_t sent = 0;
+    while(sent < buffersize){
+    ssize_t val = SSL_write(ssl, data.c_str(), buffersize);
+    switch(SSL_get_error(ssl, val)){
+      case SSL_ERROR_NONE:
+        sent += val;
+      break;
+      case SSL_ERROR_WANT_READ:
+      break;
+      case SSL_ERROR_WANT_WRITE:
+        std::this_thread::sleep_for(std::chrono::milliseconds(5)); // please fix this hacky piece of shit and just poll it please Luna
+      break;
+    }
+  }
+  return sent;
 }
 
 
