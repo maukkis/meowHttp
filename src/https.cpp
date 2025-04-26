@@ -157,7 +157,7 @@ meow Https::perform(){
     + "\r\n\r\n" 
     + *postFields;
   }
-  size_t sentLen = write(request, request.length());
+  ssize_t sentLen = write(request, request.length());
   if(sentLen < 1){
     log(ERROR, "failed to send");
     return ERR_SEND_FAILED;

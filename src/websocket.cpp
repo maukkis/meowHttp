@@ -1,4 +1,5 @@
 #include "includes/websocket.h"
+#include "includes/client.h"
 #include "includes/enum.h"
 #include <cstdint>
 #include <cstdlib>
@@ -38,7 +39,7 @@ Websocket &Websocket::setUrl(const std::string& url){
 struct Frame{
   std::unique_ptr<uint8_t[]> buffer;
   size_t frameLen;
-  size_t totalLen;
+  ssize_t totalLen;
 };
 
 template<typename T>
@@ -100,8 +101,8 @@ meow Websocket::wsClose(const uint16_t closeCode, const std::string& aa){
   memcpy(payload.get(), &beClose, 2);
   memcpy(&payload[2], aa.data(), aa.length());
   auto frame = constructFrame(payload.get(), meowWS_CLOSE, 2 + aa.length());
-  size_t slen = SSL_write(ssl, frame->buffer.get(), frame->totalLen);
-  if(slen == frame->totalLen) {
+  ssize_t sLen = write(frame->buffer.get(), frame->totalLen);
+  if(sLen == frame->totalLen) {
     close();
     return OK;
   }
@@ -110,12 +111,14 @@ meow Websocket::wsClose(const uint16_t closeCode, const std::string& aa){
 }
 
 size_t Websocket::wsSend(const std::string& payload, opcodes opCode){
+  if(!ssl) throw(meowHttp::Exception("already closed :3"));
   auto constructedFrame = constructFrame(&payload, opCode, payload.length());
-  size_t sLen = SSL_write(ssl, constructedFrame->buffer.get(), constructedFrame->totalLen);
+  ssize_t sLen = write(constructedFrame->buffer.get(), constructedFrame->totalLen);
   return sLen;
 }
 
 size_t Websocket::wsRecv(std::string& buf, struct meowWsFrame *frame){
+  if(!ssl) throw(meowHttp::Exception("already closed :3"));
   size_t rlen;
   if(moreData){
     buf = *moreData;

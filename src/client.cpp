@@ -11,7 +11,6 @@
 #include "includes/enum.h"
 #include <unistd.h>
 #include <poll.h>
- 
 
 meow sslSocket::initializeSsl(){
   method = TLS_client_method(); 
@@ -126,7 +125,7 @@ ssize_t sslSocket::write(const std::string& data, ssize_t buffersize){
     int ret = poll(pfd, 1, 5);
     if(ret > 0){
       if(pfd[0].revents & POLLOUT){
-        ssize_t val = SSL_write(ssl, data.c_str(), buffersize);
+        ssize_t val = SSL_write(ssl, data.data(), buffersize);
         switch(SSL_get_error(ssl, val)){
           case SSL_ERROR_NONE:
             sent += val;
@@ -159,6 +158,51 @@ ssize_t sslSocket::write(const std::string& data, ssize_t buffersize){
   }
   return sent;
 }
+
+ssize_t sslSocket::write(const void* data, ssize_t buffersize){
+  ssize_t sent = 0;
+  while(sent < buffersize){
+    struct pollfd pfd[2];
+    pfd[0].fd = sockfd;
+    pfd[0].events = POLLOUT;
+    pfd[1].events = 0;
+    int ret = poll(pfd, 1, 5);
+    if(ret > 0){
+      if(pfd[0].revents & POLLOUT){
+        ssize_t val = SSL_write(ssl, data, buffersize);
+        switch(SSL_get_error(ssl, val)){
+          case SSL_ERROR_NONE:
+            sent += val;
+          break;
+          case SSL_ERROR_WANT_READ:
+          break;
+          case SSL_ERROR_WANT_WRITE:
+          break;
+        }
+      }
+      else if(
+        pfd[0].revents & POLLHUP ||
+        pfd[0].revents & POLLERR || 
+        pfd[0].revents & POLLNVAL
+      ) {
+        std::cout << "got poll error owo closing :3\n";
+        close();
+        break;
+      }
+
+    }
+    else if(ret == 0){
+      break;
+    }
+    else if(ret == -1){
+      std::cout << "Poll err = " << strerror(errno) << std::endl;
+      close();
+      break;
+    }
+  }
+  return sent;
+}
+
 
 
 meow sslSocket::connect(const std::string& url, const std::string& protocol, size_t port){
