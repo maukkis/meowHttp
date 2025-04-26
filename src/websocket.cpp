@@ -111,14 +111,14 @@ meow Websocket::wsClose(const uint16_t closeCode, const std::string& aa){
 }
 
 size_t Websocket::wsSend(const std::string& payload, opcodes opCode){
-  if(!ssl) throw(meowHttp::Exception("already closed :3"));
+  if(!ssl) throw(meowHttp::Exception("already closed :3", true));
   auto constructedFrame = constructFrame(&payload, opCode, payload.length());
   ssize_t sLen = write(constructedFrame->buffer.get(), constructedFrame->totalLen);
   return sLen;
 }
 
 size_t Websocket::wsRecv(std::string& buf, struct meowWsFrame *frame){
-  if(!ssl) throw(meowHttp::Exception("already closed :3"));
+  if(!ssl) throw(meowHttp::Exception("already closed :3", true));
   size_t rlen;
   if(moreData){
     buf = *moreData;

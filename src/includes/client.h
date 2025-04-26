@@ -13,12 +13,16 @@
 namespace meowHttp {
 class Exception : std::exception {
 public:
-  Exception(const std::string& a) : msg{a} {}
+  Exception(const std::string& a, bool b = false) : msg{a}, close{b} {}
   const char *what() const throw() {
     return msg.c_str();
   }
+  bool closed() const  {
+    return close;
+  }
 private:
   std::string msg;
+  bool close = false;;
 };
 };
 
