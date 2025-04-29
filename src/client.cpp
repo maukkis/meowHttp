@@ -121,7 +121,7 @@ ssize_t sslSocket::write(const std::string& data, ssize_t buffersize){
     pfd[0].fd = sockfd;
     pfd[0].events = POLLOUT;
     pfd[1].events = 0;
-    int ret = poll(pfd, 1, 5);
+    int ret = poll(pfd, 1, 70);
     if(ret > 0){
       if(pfd[0].revents & POLLOUT){
         ssize_t val = SSL_write(ssl, data.data(), buffersize);
@@ -165,7 +165,7 @@ ssize_t sslSocket::write(const void* data, ssize_t buffersize){
     pfd[0].fd = sockfd;
     pfd[0].events = POLLOUT;
     pfd[1].events = 0;
-    int ret = poll(pfd, 1, 5);
+    int ret = poll(pfd, 1, 70);
     if(ret > 0){
       if(pfd[0].revents & POLLOUT){
         ssize_t val = SSL_write(ssl, data, buffersize);
