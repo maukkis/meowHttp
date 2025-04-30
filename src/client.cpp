@@ -100,6 +100,7 @@ ssize_t sslSocket::read(std::string& buf){
       ){
         std::cout << "got poll error owo closing :3\n";
         close();
+        throw(meowHttp::Exception("connection closed", true));
         break;
       }
     }
@@ -142,6 +143,7 @@ ssize_t sslSocket::write(const std::string& data, ssize_t buffersize){
       ) {
         std::cout << "got poll error owo closing :3\n";
         close();
+        throw(meowHttp::Exception("connection closed", true));
         break;
       }
 
@@ -185,6 +187,7 @@ ssize_t sslSocket::write(const void* data, ssize_t buffersize){
         pfd[0].revents & POLLNVAL
       ) {
         std::cout << "got poll error owo closing :3\n";
+        throw(meowHttp::Exception("connection closed", true));
         close();
         break;
       }
