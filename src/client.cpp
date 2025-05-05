@@ -88,6 +88,7 @@ ssize_t sslSocket::read(std::string& buf){
               int error = SSL_get_error(ssl,recv);
               std::cout << "error: " << error << '\n';
               close();
+              throw(meowHttp::Exception("openssl error", true));
               return meow;
             break;
           }
