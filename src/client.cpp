@@ -41,14 +41,18 @@ inline const std::string sslSocket::logEnumToString(enum log meow){
   }
 }
 
-
-void sslSocket::close(){
+void sslSocket::freeSSL(){
   if(ssl){
     SSL_shutdown(ssl);
     SSL_CTX_free(ctx);
     SSL_free(ssl);
     ssl = nullptr;
   }
+}
+
+void sslSocket::close(){
+  this->freeSSL();
+  shutdown(sockfd, SHUT_RDWR);
   ::close(sockfd);
 }
 
@@ -84,6 +88,11 @@ ssize_t sslSocket::read(std::string& buf){
             case SSL_ERROR_WANT_READ:
               bark = true;
             break;
+            case SSL_ERROR_SSL:
+            case SSL_ERROR_SYSCALL:
+              freeSSL();
+              ::close(sockfd);
+              return meow;
             default:
               int error = SSL_get_error(ssl,recv);
               std::cout << "error: " << error << '\n';
@@ -135,6 +144,11 @@ ssize_t sslSocket::write(const std::string& data, ssize_t buffersize){
           break;
           case SSL_ERROR_WANT_WRITE:
           break;
+          case SSL_ERROR_SSL:
+          case SSL_ERROR_SYSCALL:
+            freeSSL();
+            ::close(sockfd);
+            return sent;
         }
       }
       else if(
@@ -180,6 +194,10 @@ ssize_t sslSocket::write(const void* data, ssize_t buffersize){
           break;
           case SSL_ERROR_WANT_WRITE:
           break;
+          case SSL_ERROR_SYSCALL:
+            freeSSL();
+            ::close(sockfd);
+            return sent;
         }
       }
       else if(

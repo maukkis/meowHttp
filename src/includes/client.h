@@ -28,6 +28,7 @@ private:
 
 class sslSocket{
 protected:
+  void freeSSL();
   meow initializeSsl();
   enum log{
     INFO,
