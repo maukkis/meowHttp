@@ -43,7 +43,6 @@ inline const std::string sslSocket::logEnumToString(enum log meow){
 
 void sslSocket::freeSSL(){
   if(ssl){
-    SSL_shutdown(ssl);
     SSL_CTX_free(ctx);
     SSL_free(ssl);
     ssl = nullptr;
@@ -51,6 +50,7 @@ void sslSocket::freeSSL(){
 }
 
 void sslSocket::close(){
+  SSL_shutdown(ssl);
   this->freeSSL();
   shutdown(sockfd, SHUT_RDWR);
   ::close(sockfd);
