@@ -56,10 +56,15 @@ std::string parseBody(const std::string& meow){
   size_t startPos{meow.find("\r\n\r\n") + strlen("\r\n\r\n")};
   if(parseHeaders(meow, "Transfer-Encoding: ") == "chunked"){
     std::string parsedBuffer;
-    std::string woofs = meow.substr(startPos, meow.find("\r\n", startPos) - startPos);
-    std::stringstream meows;
-    size_t woof = std::stoul(woofs, nullptr, 16);
-    parsedBuffer.append(meow.substr(meow.find("\r\n", startPos) + strlen("\r\n"), woof));
+    std::string a = meow.substr(startPos);
+    size_t woof;
+    do {
+      std::string woofs = a.substr(0, a.find("\r\n"));
+      woof = std::stoul(woofs, nullptr, 16);
+      if(woof < 1) break;
+      parsedBuffer.append(a.substr(a.find("\r\n") + 2, woof));
+      a = a.substr(a.find("\r\n") + 4 + woof); // 4 is here because a chunk is followed by a \r\n which we have to skip over
+    } while(woof > 0);
     return parsedBuffer;
   }
   return meow.substr(startPos);
