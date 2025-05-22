@@ -151,7 +151,6 @@ meow Https::perform(){
     "\r\nHost: " + hostname +
     "\r\nUser-Agent:  meow browser"
     "\r\nAccept: */*"
-    "\r\nContent-Type: application/json"
     "\r\nContent-Length: " + std::to_string(postFields->length());
     if(!headers.empty()){
       for(const auto& a : headers){
