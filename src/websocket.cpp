@@ -6,7 +6,7 @@
 #include <cstring>
 #if defined(__linux__)
 #include <endian.h>
-#elif defined(_AIX)
+#elif defined(_AIX) || defined(__sun)
 #include <sys/types.h>
 #endif
 #include <iostream>
@@ -72,7 +72,7 @@ std::unique_ptr<Frame> constructFrame(const T* payload, opcodes opCode, size_t p
   }
   else { // biggest payload owo so big
     frame[1] = 0x80 | 127; // set masking bit and set payload length to a 64 bit payload
-    #if defined(_AIX)
+    #if defined(_AIX) || defined(__sun)
     uint64_t len = htonll(payloadLen);
     #else
     uint64_t len = htobe64(payloadLen); // make a 64 bit value that is 64 bits wow shocking
