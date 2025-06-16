@@ -3,6 +3,7 @@
 #include "client.h"
 #include "enum.h"
 #include <cstdint>
+#include <optional>
 namespace meowWs {
 
 
@@ -14,8 +15,8 @@ enum opcodes{
 };
 
 struct meowWsFrame {
-  // placeholder value
-  // size_t bytesLeft;
+  size_t frameLen;
+  size_t payloadLen;
   enum opcodes opcode;
   bool fragmented = false;
 };
@@ -34,7 +35,8 @@ public:
   Websocket &setUrl(const std::string& url);
 private:
   std::string url;
-  std::string *moreData = nullptr;
+  std::optional<std::string> moreData;
+  void parseWs(std::string& buf, meowWsFrame* frame, size_t len);
 };
 }
 #endif

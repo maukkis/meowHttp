@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <optional>
 #if defined(__linux__)
 #include <endian.h>
 #elif defined(_AIX) || defined(__sun)
@@ -41,6 +42,50 @@ struct Frame{
   size_t frameLen;
   ssize_t totalLen;
 };
+
+
+
+void Websocket::parseWs(std::string& buf, meowWsFrame* frame, size_t rlen){
+  size_t startPos;
+  switch(static_cast<uint8_t>(buf[0])){
+    case 0x81:
+      frame->opcode = meowWS_TEXT;
+    break;
+    case 0x88:
+      frame->opcode = meowWS_CLOSE;
+    break;
+    case 0x89:
+      frame->opcode = meowWS_PING;
+    break;
+    case 0x8A:
+      frame->opcode = meowWS_PONG;
+    break;
+  }
+  if(buf[1] < 126){
+    startPos = 2;
+    frame->frameLen = 2;
+    frame->payloadLen = buf[1];
+  }
+  else if(buf[1] == 126){
+    startPos = 4;
+    frame->frameLen = 4;
+    uint16_t pLen;
+    std::memcpy(&pLen, &frame[2], 2);
+    frame->payloadLen = pLen;
+  }
+  else{
+    startPos = 10;
+    frame->frameLen = 10;
+    uint64_t pLen;
+    std::memcpy(&pLen, &frame[2], 8);
+    frame->payloadLen = pLen;
+  }
+  if(rlen > (frame->frameLen + frame->payloadLen)){
+    moreData = std::make_optional(buf.substr(frame->frameLen + frame->payloadLen));
+  }
+  buf = buf.substr(startPos, frame->payloadLen);
+
+}
 
 template<typename T>
 std::unique_ptr<Frame> constructFrame(const T* payload, opcodes opCode, size_t payloadLen){
@@ -93,6 +138,7 @@ std::unique_ptr<Frame> constructFrame(const T* payload, opcodes opCode, size_t p
   return frameStruct;
 }
 
+
 meow Websocket::wsClose(const uint16_t closeCode, const std::string& aa){
   if(!ssl) return ERR_ALREADY_CLOSED;
   uint16_t beClose = htons(closeCode);
@@ -123,8 +169,9 @@ size_t Websocket::wsRecv(std::string& buf, struct meowWsFrame *frame){
   if(moreData){
     buf = *moreData;
     rlen = moreData->length();
-    delete moreData;
-    moreData = nullptr;
+    moreData->resize(0);
+    moreData->shrink_to_fit();
+    moreData.reset();
   }
   else{
     rlen = read(buf);
@@ -132,33 +179,8 @@ size_t Websocket::wsRecv(std::string& buf, struct meowWsFrame *frame){
   if(rlen < 1){
     return rlen;
   }
-  switch(static_cast<uint8_t>(buf[0])){
-      case 0x81:
-        frame->opcode = meowWS_TEXT;
-      break;
-      case 0x88:
-        frame->opcode = meowWS_CLOSE;
-      break;
-      case 0x89:
-        frame->opcode = meowWS_PING;
-      break;
-      case 0x8A:
-        frame->opcode = meowWS_PONG;
-      break;
-    }
-  if(buf[1] < 126){
-    rlen -= 2;
-    buf = buf.substr(2);
-  }
-  else if(buf[1] == 126){
-    rlen -= 4;
-    buf = buf.substr(4);
-  }
-  else{
-    rlen -= 10;
-    buf = buf.substr(8);
-  }
-  return rlen;
+  parseWs(buf, frame, rlen);
+  return frame->payloadLen;
 }
 
 size_t parseStatusCode(std::string_view meow){
@@ -251,8 +273,7 @@ meow Websocket::perform(){
     if(buf.find("\r\n\r\n") + strlen("\r\n\r\n") >= buf.length()){
       return OK;
     }
-    moreData = new std::string;
-    *moreData = buf.substr(buf.find("\r\n\r\n") + 4);
+    moreData = std::make_optional(buf.substr(buf.find("\r\n\r\n") + 4));
     return OK;
   }
   return ERR_CONNECT_FAILED;
