@@ -70,14 +70,14 @@ void Websocket::parseWs(std::string& buf, meowWsFrame* frame, size_t rlen){
     startPos = 4;
     frame->frameLen = 4;
     uint16_t pLen;
-    std::memcpy(&pLen, &frame[2], 2);
+    std::memcpy(&pLen, &buf[2], 2);
     frame->payloadLen = pLen;
   }
   else{
     startPos = 10;
     frame->frameLen = 10;
     uint64_t pLen;
-    std::memcpy(&pLen, &frame[2], 8);
+    std::memcpy(&pLen, &buf[2], 8);
     frame->payloadLen = pLen;
   }
   if(rlen > (frame->frameLen + frame->payloadLen)){
