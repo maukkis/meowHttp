@@ -72,7 +72,6 @@ void Websocket::parseWs(std::string& buf, meowWsFrame* frame, size_t rlen){
     frame->frameLen = 4;
     uint16_t pLen;
     std::memcpy(&pLen, &bufC[2], 2);
-    std::cout << pLen << std::endl;
     frame->payloadLen = ntohs(pLen);
   }
   else{
