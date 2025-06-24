@@ -80,7 +80,7 @@ void Websocket::parseWs(std::string& buf, meowWsFrame* frame, size_t rlen){
     uint64_t pLen;
     std::memcpy(&pLen, &bufC[2], 8);
     #if defined(_AIX) || defined(__sun)
-    frame->payloadLen = htonll(pLen)
+    frame->payloadLen = ntohll(pLen);
     #else
     frame->payloadLen = htole64(pLen);
     #endif
