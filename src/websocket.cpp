@@ -80,7 +80,11 @@ void Websocket::parseWs(std::string& buf, meowWsFrame* frame, size_t rlen){
     frame->frameLen = 10;
     uint64_t pLen;
     std::memcpy(&pLen, &bufC[2], 8);
+    #if defined(_AIX) || defined(__sun)
+    frame->payloadLen = htonll(plen)
+    #else
     frame->payloadLen = htole64(pLen);
+    #endif
   }
   if(rlen > (frame->frameLen + frame->payloadLen)){
     moreData = std::make_optional(buf.substr(frame->frameLen + frame->payloadLen));
