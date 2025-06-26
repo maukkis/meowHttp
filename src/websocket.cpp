@@ -9,6 +9,8 @@
 #include <endian.h>
 #elif defined(_AIX) || defined(__sun)
 #include <sys/types.h>
+#elif defined(__FreeBSD__)
+#include <sys/endian.h>
 #endif
 #include <iostream>
 #include <memory>
