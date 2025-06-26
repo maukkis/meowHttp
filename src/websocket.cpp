@@ -5,11 +5,11 @@
 #include <cstdlib>
 #include <cstring>
 #include <optional>
-#if defined(__linux__)
+#if defined(__linux__) || defined(__OpenBSD__)
 #include <endian.h>
 #elif defined(_AIX) || defined(__sun)
 #include <sys/types.h>
-#elif defined(__FreeBSD__)
+#elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
 #include <sys/endian.h>
 #endif
 #include <iostream>
