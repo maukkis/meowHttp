@@ -1,10 +1,12 @@
 #include "includes/https.h"
 #include "includes/client.h"
 #include "includes/enum.h"
+#include <expected>
 #include <openssl/conf.h>
 #include <openssl/crypto.h>
 #include <openssl/ssl.h>
 #include <iostream>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -12,7 +14,11 @@
 
 
 namespace meowHttp {
-
+namespace {
+enum errors {
+  MissingData
+};
+}
 
 Https &Https::setUrl(const std::string& url){
   this->url = url;
@@ -43,18 +49,26 @@ enum HTTPCODES Https::getLastStatusCode(){
   return static_cast<HTTPCODES>(lastStatusCode);
 }
 
-std::string parseHeaders(const std::string& buffer, const std::string& headerToParse){
-  size_t startpos = buffer.find(headerToParse) + headerToParse.length();
+std::optional<std::string> parseHeaders(const std::string& buffer, const std::string& headerToParse){
+  size_t startpos = buffer.find(headerToParse);
   if (startpos != std::string::npos){
+    startpos += headerToParse.length();
     size_t endPos = buffer.find("\r\n", startpos);
     return buffer.substr(startpos, endPos - startpos);
   }
-  return "";
+  return std::nullopt;
 }
 
-std::string parseBody(const std::string& meow){
+std::expected<std::string, enum errors> parseBody(const std::string& meow){
   size_t startPos{meow.find("\r\n\r\n") + strlen("\r\n\r\n")};
-  if(parseHeaders(meow, "Transfer-Encoding: ") == "chunked"){
+  if(auto c = parseHeaders(meow, "Content-Length: "); c.has_value()){
+    size_t len = std::stoul(*c, nullptr, 10);
+    if(meow.length() - startPos < len){
+      return std::unexpected(MissingData);
+    }
+    return meow.substr(startPos, len);
+  }
+  if(auto c = parseHeaders(meow, "Transfer-Encoding: "); c.has_value() && *c == "chunked"){
     std::string parsedBuffer;
     std::string a = meow.substr(startPos);
     size_t woof;
@@ -173,11 +187,18 @@ meow Https::perform(){
     rlen = read(buffer);
   }
   lastStatusCode = parseStatusCode(buffer);
-  if(writeData){
-    *writeData = parseBody(buffer);
-  }
-  else{
-    std::cout << parseBody(buffer);
+  while(true){
+    auto a = parseBody(buffer);
+    if(a.has_value()){
+      if(writeData)
+        *writeData = a.value();
+      else
+        std::cout << a.value();
+      break;
+    }
+    if(a.error() == MissingData){
+      read(buffer);
+    }
   }
   if(postFields){
     postFields->resize(0);
