@@ -112,8 +112,8 @@ meow Https::perform(){
   // parse url
   std::string protocol = url.substr(0, url.find("://"));
   std::string hostname = url.substr(url.find("://") + strlen("://"));
-  headers.insert({"host: ", hostname});
   size_t pathPos = hostname.find("/");
+  headers.insert({"host: ", hostname.substr(0, pathPos)});
   std::string path;
   if (pathPos != std::string::npos) {
     path = hostname.substr(pathPos); 
