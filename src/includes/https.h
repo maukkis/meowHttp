@@ -3,7 +3,7 @@
 #include "client.h"
 #include "enum.h"
 #include <optional>
-#include <vector>
+#include <unordered_map>
 
 namespace meowHttp {
 
@@ -13,7 +13,7 @@ public:
   Https &setWriteData(std::string *writeData);
   Https &setUrl(const std::string& url);
   Https &setPostfields(const std::string& post);
-  Https &setHeader(const std::string& header);
+  Https &setHeader(const std::string_view header);
   Https &setCustomMethod(const std::string& method);
   enum HTTPCODES getLastStatusCode();
   meow perform();
@@ -22,7 +22,10 @@ private:
   std::string *writeData = nullptr;
   std::optional<std::string> postFields;
   size_t lastStatusCode;
-  std::vector<std::string> headers;
+  std::unordered_map<std::string, std::string> headers{
+    {"accept: ", "*/*"},
+    {"user-agent: ", "meowHttp"},
+  };
   std::optional<std::string> customMethod;
 };
 }

@@ -1,6 +1,7 @@
 #include "includes/https.h"
 #include "includes/client.h"
 #include "includes/enum.h"
+#include <algorithm>
 #include <expected>
 #include <openssl/conf.h>
 #include <openssl/crypto.h>
@@ -18,6 +19,11 @@ namespace {
 enum errors {
   MissingData
 };
+void lowerString(std::string& a){
+  std::transform(a.begin(), a.end(), a.begin(), [](char c){
+    return std::tolower(c);
+  });
+}
 }
 
 Https &Https::setUrl(const std::string& url){
@@ -32,11 +38,15 @@ Https &Https::setWriteData(std::string *writeData){
 
 Https &Https::setPostfields(const std::string& post){
   postFields = post;
+  headers.insert({"content-length: ", std::to_string(post.length())});
   return *this;
 }
 
-Https &Https::setHeader(const std::string& header){
-  headers.emplace_back(header);
+Https &Https::setHeader(const std::string_view header){
+  ssize_t colon = header.find(": ");
+  const std::string_view key = header.substr(0, colon+2);
+  const std::string_view value = header.substr(colon+2);
+  headers[std::string(key)] = std::string(value);
   return *this;
 }
 
@@ -49,7 +59,7 @@ enum HTTPCODES Https::getLastStatusCode(){
   return static_cast<HTTPCODES>(lastStatusCode);
 }
 
-std::optional<std::string> parseHeaders(const std::string& buffer, const std::string& headerToParse){
+std::optional<std::string> parseHeaders(std::string& buffer, const std::string& headerToParse){
   size_t startpos = buffer.find(headerToParse);
   if (startpos != std::string::npos){
     startpos += headerToParse.length();
@@ -61,14 +71,16 @@ std::optional<std::string> parseHeaders(const std::string& buffer, const std::st
 
 std::expected<std::string, enum errors> parseBody(const std::string& meow){
   size_t startPos{meow.find("\r\n\r\n") + strlen("\r\n\r\n")};
-  if(auto c = parseHeaders(meow, "Content-Length: "); c.has_value()){
+  std::string headers = meow.substr(0, startPos);
+  lowerString(headers);
+  if(auto c = parseHeaders(headers, "content-length: "); c.has_value()){
     size_t len = std::stoul(*c, nullptr, 10);
     if(meow.length() - startPos < len){
       return std::unexpected(MissingData);
     }
     return meow.substr(startPos, len);
   }
-  if(auto c = parseHeaders(meow, "Transfer-Encoding: "); c.has_value() && *c == "chunked"){
+  if(auto c = parseHeaders(headers, "transfer-encoding: "); c.has_value() && *c == "chunked"){
     std::string parsedBuffer;
     std::string a = meow.substr(startPos);
     size_t woof;
@@ -83,6 +95,7 @@ std::expected<std::string, enum errors> parseBody(const std::string& meow){
   }
   return meow.substr(startPos);
 }
+
 
 size_t parseStatusCode(std::string_view meow){
   size_t startPos{0};
@@ -99,6 +112,7 @@ meow Https::perform(){
   // parse url
   std::string protocol = url.substr(0, url.find("://"));
   std::string hostname = url.substr(url.find("://") + strlen("://"));
+  headers.insert({"host: ", hostname});
   size_t pathPos = hostname.find("/");
   std::string path;
   if (pathPos != std::string::npos) {
@@ -131,49 +145,18 @@ meow Https::perform(){
   meow.append(SSL_get_cipher(ssl));
   log(INFO, meow);
   std::string request;
-  if (!postFields && !customMethod){
-    request = "GET " + path + " HTTP/1.1"
-    "\r\nHost: " + hostname + 
-    "\r\nUser-Agent: meow browser"
-    "\r\nAccept: */*";
-    if(!headers.empty()){
-      for(const auto& a : headers){
-        request.append("\r\n" + a);
-      }
-    }
-    request += "\r\n\r\n";
+  if(!postFields && !customMethod)
+    request = "GET " + path + " HTTP/1.1\r\n";
+  else if(postFields && !customMethod)
+    request = "POST " + path + " HTTP/1.1\r\n";
+  else 
+    request = *customMethod + ' ' + path + " HTTP/1.1\r\n";
+  for(auto& a : headers){
+    request += a.first + a.second + "\r\n";
   }
-  else if(customMethod){
-    request = *customMethod + ' ' + path + " HTTP/1.1"
-    "\r\nHost: " + hostname + 
-    "\r\nUser-Agent: meow browser"
-    "\r\nAccept: */*";
-    if(!headers.empty()){
-      for(const auto& a : headers){
-        request.append("\r\n" + a);
-      }
-    }
-    if(postFields){
-      request += "\r\nContent-Length: " + std::to_string(postFields->length()) + "\r\n\r\n" + *postFields;
-    }
-    else {
-      request.append("\r\n\r\n");
-    }
-  }
-  else {
-    request = "POST " + path + " HTTP/1.1"
-    "\r\nHost: " + hostname +
-    "\r\nUser-Agent:  meow browser"
-    "\r\nAccept: */*"
-    "\r\nContent-Length: " + std::to_string(postFields->length());
-    if(!headers.empty()){
-      for(const auto& a : headers){
-        request.append("\r\n" + a);
-      }
-    }
-    request +=
-    + "\r\n\r\n" 
-    + *postFields;
+  request += "\r\n";
+  if(postFields){
+    request += *postFields;
   }
   ssize_t sentLen = write(request, request.length());
   if(sentLen < 1){
