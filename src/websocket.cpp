@@ -25,7 +25,6 @@
 #include <openssl/ssl.h>
 #include <string>
 #include <type_traits>
-#include <unistd.h>
 #include <stdio.h>
 #include <sstream>
 

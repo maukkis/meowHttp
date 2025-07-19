@@ -14,10 +14,10 @@
 #include <netinet/in.h>
 #include <sys/poll.h>
 #include <sys/socket.h>
+#include <unistd.h>
 #endif
 #include <iostream>
 #include "includes/enum.h"
-#include <unistd.h>
 
 
 meow sslSocket::initializeSsl(){
