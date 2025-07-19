@@ -1,23 +1,31 @@
 #include "includes/client.h"
 #include <cerrno>
 #include <cstring>
-#include <netdb.h>
-#include <netinet/in.h>
 #include <openssl/evp.h>
 #include <openssl/ssl.h>
+#ifdef WIN32
+#define poll WSAPoll
+#define SHUT_RDWR SD_BOTH
+#include <windows.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
+#include <netdb.h>
+#include <netinet/in.h>
 #include <sys/poll.h>
 #include <sys/socket.h>
+#endif
 #include <iostream>
 #include "includes/enum.h"
 #include <unistd.h>
-#include <poll.h>
+
 
 meow sslSocket::initializeSsl(){
   method = TLS_client_method(); 
-  ctx = SSL_CTX_new (method);
-  ssl = SSL_new (ctx);
+  ctx = SSL_CTX_new(method);
+  ssl = SSL_new(ctx);
   if(!ssl){
-    log(ERROR, "failed to create ssl");
+    log(ERR, "failed to create ssl");
     return ERR_SSL_FAILED;
   }
   return OK;
@@ -32,7 +40,7 @@ inline const std::string sslSocket::logEnumToString(enum log meow){
     case INFO:
       return "info";
     break;
-    case ERROR:
+    case ERR:
       return "error";
     break;
     default:
@@ -227,13 +235,20 @@ ssize_t sslSocket::write(const void* data, ssize_t buffersize){
 
 
 meow sslSocket::connect(const std::string& url, const std::string& protocol, size_t port){
+  #ifdef WIN32
+    WSADATA wsaData;
+    int res = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    if(res != 0){
+      return ERR_CONNECT_FAILED;
+    }
+  #endif
   sockfd = socket(AF_INET, SOCK_STREAM, 0);
   struct sockaddr_in meow;
   meow.sin_port = htons(port);
   meow.sin_family = AF_INET;
   meow.sin_addr.s_addr = resolveHostName(url, protocol);
   if(::connect(sockfd, (sockaddr *)&meow, sizeof(meow)) != 0){
-    log(ERROR, "failed to connect");
+    log(ERR, "failed to connect");
     return ERR_CONNECT_FAILED;
   }
   return OK;
@@ -247,7 +262,8 @@ in_addr_t sslSocket::resolveHostName(const std::string& hostname, const std::str
   hints.ai_socktype = SOCK_STREAM;
   ssize_t value;
   if((value = getaddrinfo(hostname.c_str(), protocol.c_str(), &hints, &result)) != 0){
-    return ERROR;
+    std::cout << value << std::endl;
+    return ERR_CONNECT_FAILED;
   }
   log(INFO, "resolved hostname");
   struct sockaddr_in woof = *(struct sockaddr_in *)result->ai_addr;

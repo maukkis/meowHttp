@@ -11,7 +11,6 @@
 #include <sstream>
 #include <string>
 #include <string_view>
-#include <unistd.h>
 
 
 namespace meowHttp {
@@ -123,12 +122,12 @@ meow Https::perform(){
     path = '/';
   }
   if(connect(hostname, protocol) != OK){
-    log(ERROR, "failed to connect");
+    log(ERR, "failed to connect");
     return ERR_CONNECT_FAILED;
   }
   log(INFO, "connected");
   if(initializeSsl() != OK){
-    log(ERROR, "failed to initializeSsl");
+    log(ERR, "failed to initializeSsl");
     return ERR_SSL_FAILED;
   }
   SSL_set_tlsext_host_name(ssl, hostname.c_str());
@@ -160,7 +159,7 @@ meow Https::perform(){
   }
   ssize_t sentLen = write(request, request.length());
   if(sentLen < 1){
-    log(ERROR, "failed to send");
+    log(ERR, "failed to send");
     return ERR_SEND_FAILED;
   }
   log(INFO, "sent headers");
