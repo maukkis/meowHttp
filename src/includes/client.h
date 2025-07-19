@@ -3,13 +3,21 @@
 
 #include <cstdint>
 #include <openssl/ssl.h>
+#ifdef WIN32
+using in_addr_t = uint32_t;
+#include <windows.h>
+#include <winsock2.h>
+#else
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#endif
 #include "enum.h"
 #include <string>
 #include <exception>
+
+
 namespace meowHttp {
 class Exception : std::exception {
 public:
@@ -32,14 +40,14 @@ protected:
   meow initializeSsl();
   enum log{
     INFO,
-    ERROR,
+    ERR,
   };
   in_addr_t resolveHostName(const std::string& hostname, const std::string& protocol);
   meow connect(const std::string& url, const std::string& protocol, size_t port = 443);
   ssize_t read(std::string& buf);
   ssize_t write(const std::string& data, ssize_t buffersize);
   ssize_t write(const void* data, ssize_t buffersize);
-  void log(log meow, const std::string& message);
+  void log(enum log meow, const std::string& message);
   const std::string logEnumToString(enum log meow);
   void enableLogging(){ bark = true; }
   void close();

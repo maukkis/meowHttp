@@ -5,6 +5,10 @@
 #include <cstdlib>
 #include <cstring>
 #include <optional>
+#ifdef WIN32
+#define htole64(x) _byteswap_uint64(x)
+#define htobe64(x) _byteswap_uint64(x)
+#endif
 #if defined(__linux__) || defined(__OpenBSD__)
 #include <endian.h>
 #elif defined(_AIX) || defined(__sun)
@@ -14,7 +18,6 @@
 #endif
 #include <iostream>
 #include <memory>
-#include <netinet/in.h>
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
@@ -22,7 +25,6 @@
 #include <openssl/ssl.h>
 #include <string>
 #include <type_traits>
-#include <unistd.h>
 #include <stdio.h>
 #include <sstream>
 
@@ -214,12 +216,12 @@ meow Websocket::perform(){
     path = '/';
   }
   if(connect(hostname, protocol) != OK){
-    log(ERROR, "failed to connect");
+    log(ERR, "failed to connect");
     return ERR_CONNECT_FAILED;
   }
   log(INFO, "connected");
   if(initializeSsl() != OK){
-    log(ERROR, "failed to initializeSsl");
+    log(ERR, "failed to initializeSsl");
     return ERR_SSL_FAILED;
   }
   SSL_set_tlsext_host_name(ssl, hostname.c_str());
@@ -239,7 +241,7 @@ meow Websocket::perform(){
   unsigned char nonce[16];
   int rc = RAND_bytes(nonce, sizeof(nonce));
   if(rc != 1){
-    log(ERROR, "failed to generate nonce");
+    log(ERR, "failed to generate nonce");
     return ERR_SSL_FAILED;
   }
   BIO *b64 = BIO_new(BIO_f_base64());
@@ -268,7 +270,7 @@ meow Websocket::perform(){
   free(b64Nonce);
   // send the request
   if(write(request, request.length()) < 1){
-    log(ERROR, "failed to send a request");
+    log(ERR, "failed to send a request");
     return ERR_SEND_FAILED;
   }
   std::string buf;
