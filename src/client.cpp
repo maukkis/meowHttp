@@ -64,7 +64,7 @@ void sslSocket::close(){
   #ifdef WIN32
   closesocket(sockfd);
   #else
-  ::close(sockfd)
+  ::close(sockfd);
   #endif
 }
 
@@ -106,7 +106,7 @@ ssize_t sslSocket::read(std::string& buf){
               #ifdef WIN32
               closesocket(sockfd);
               #else
-              ::close(sockfd)
+              ::close(sockfd);
               #endif
               return meow;
             default:
@@ -166,7 +166,7 @@ ssize_t sslSocket::write(const std::string& data, ssize_t buffersize){
               #ifdef WIN32
               closesocket(sockfd);
               #else
-              ::close(sockfd)
+              ::close(sockfd);
               #endif
             return sent;
         }
@@ -219,7 +219,7 @@ ssize_t sslSocket::write(const void* data, ssize_t buffersize){
             #ifdef WIN32
             closesocket(sockfd);
             #else
-            ::close(sockfd)
+            ::close(sockfd);
             #endif
             return sent;
         }
