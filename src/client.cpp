@@ -61,7 +61,11 @@ void sslSocket::close(){
   SSL_shutdown(ssl);
   this->freeSSL();
   shutdown(sockfd, SHUT_RDWR);
-  ::close(sockfd);
+  #ifdef WIN32
+  closesocket(sockfd);
+  #else
+  ::close(sockfd)
+  #endif
 }
 
 ssize_t sslSocket::read(std::string& buf){
@@ -99,7 +103,11 @@ ssize_t sslSocket::read(std::string& buf){
             case SSL_ERROR_SSL:
             case SSL_ERROR_SYSCALL:
               freeSSL();
-              ::close(sockfd);
+              #ifdef WIN32
+              closesocket(sockfd);
+              #else
+              ::close(sockfd)
+              #endif
               return meow;
             default:
               int error = SSL_get_error(ssl,recv);
@@ -155,7 +163,11 @@ ssize_t sslSocket::write(const std::string& data, ssize_t buffersize){
           case SSL_ERROR_SSL:
           case SSL_ERROR_SYSCALL:
             freeSSL();
-            ::close(sockfd);
+              #ifdef WIN32
+              closesocket(sockfd);
+              #else
+              ::close(sockfd)
+              #endif
             return sent;
         }
       }
@@ -204,7 +216,11 @@ ssize_t sslSocket::write(const void* data, ssize_t buffersize){
           break;
           case SSL_ERROR_SYSCALL:
             freeSSL();
-            ::close(sockfd);
+            #ifdef WIN32
+            closesocket(sockfd);
+            #else
+            ::close(sockfd)
+            #endif
             return sent;
         }
       }
