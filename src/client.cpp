@@ -5,11 +5,13 @@
 #include <openssl/ssl.h>
 #ifdef WIN32
 #define poll WSAPoll
+#define closeSock(x) ::closesocket(x)
 #define SHUT_RDWR SD_BOTH
 #include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #else
+#define closeSock(x) ::close(x)
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/poll.h>
@@ -61,11 +63,7 @@ void sslSocket::close(){
   SSL_shutdown(ssl);
   this->freeSSL();
   shutdown(sockfd, SHUT_RDWR);
-  #ifdef WIN32
-  closesocket(sockfd);
-  #else
-  ::close(sockfd);
-  #endif
+  closeSock(sockfd);
 }
 
 ssize_t sslSocket::read(std::string& buf){
@@ -103,11 +101,7 @@ ssize_t sslSocket::read(std::string& buf){
             case SSL_ERROR_SSL:
             case SSL_ERROR_SYSCALL:
               freeSSL();
-              #ifdef WIN32
-              closesocket(sockfd);
-              #else
-              ::close(sockfd);
-              #endif
+              closeSock(sockfd);
               return meow;
             default:
               int error = SSL_get_error(ssl,recv);
@@ -163,11 +157,7 @@ ssize_t sslSocket::write(const std::string& data, ssize_t buffersize){
           case SSL_ERROR_SSL:
           case SSL_ERROR_SYSCALL:
             freeSSL();
-              #ifdef WIN32
-              closesocket(sockfd);
-              #else
-              ::close(sockfd);
-              #endif
+            closeSock(sockfd);
             return sent;
         }
       }
@@ -216,11 +206,7 @@ ssize_t sslSocket::write(const void* data, ssize_t buffersize){
           break;
           case SSL_ERROR_SYSCALL:
             freeSSL();
-            #ifdef WIN32
-            closesocket(sockfd);
-            #else
-            ::close(sockfd);
-            #endif
+            closeSock(sockfd);
             return sent;
         }
       }
