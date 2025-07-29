@@ -58,8 +58,7 @@ struct Frame{
 
 int Websocket::parseWs(std::string& buf, meowWsFrame* frame, size_t rlen){
   size_t startPos;
-  const char *bufC = buf.data();
-  switch(static_cast<uint8_t>(buf[0])){
+  switch(static_cast<uint8_t>(buf.at(0))){
     case 0x81:
       frame->opcode = meowWS_TEXT;
     break;
@@ -77,29 +76,29 @@ int Websocket::parseWs(std::string& buf, meowWsFrame* frame, size_t rlen){
     break;
   }
 
-  if(bufC[1] & (1 << 7))
+  if(buf.at(1) & (1 << 7))
     return Masked;
 
-  if(bufC[1] < 126){
+  if(buf.at(1) < 126){
     startPos = 2;
     frame->frameLen = 2;
 
-    frame->payloadLen = bufC[1];
+    frame->payloadLen = buf.at(1);
   }
-  else if(bufC[1] == 126){
+  else if(buf.at(1) == 126){
     startPos = 4;
     frame->frameLen = 4;
 
     uint16_t pLen;
-    std::memcpy(&pLen, &bufC[2], 2);
+    std::memcpy(&pLen, &buf.at(2), 2);
     frame->payloadLen = ntohs(pLen);
   }
-  else if(bufC[1] == 127){
+  else if(buf.at(1) == 127){
     startPos = 10;
     frame->frameLen = 10;
 
     uint64_t pLen;
-    std::memcpy(&pLen, &bufC[2], 8);
+    std::memcpy(&pLen, &buf.at(2), 8);
     #if defined(_AIX) || defined(__sun)
     frame->payloadLen = ntohll(pLen);
     #else
