@@ -36,7 +36,7 @@ public:
 private:
   std::string url;
   std::optional<std::string> moreData;
-  void parseWs(std::string& buf, meowWsFrame* frame, size_t len);
+  int parseWs(std::string& buf, meowWsFrame* frame, size_t len);
 };
 }
 #endif

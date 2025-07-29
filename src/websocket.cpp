@@ -31,6 +31,13 @@
 
 namespace meowWs {
 
+namespace {
+  enum InternalError {
+    Masked = 1,
+    InvalidOpcode,
+    InvalidPLEN,
+  };
+}
 
 Websocket::~Websocket(){
   wsClose();
@@ -49,7 +56,7 @@ struct Frame{
 
 
 
-void Websocket::parseWs(std::string& buf, meowWsFrame* frame, size_t rlen){
+int Websocket::parseWs(std::string& buf, meowWsFrame* frame, size_t rlen){
   size_t startPos;
   const char *bufC = buf.data();
   switch(static_cast<uint8_t>(buf[0])){
@@ -65,22 +72,32 @@ void Websocket::parseWs(std::string& buf, meowWsFrame* frame, size_t rlen){
     case 0x8A:
       frame->opcode = meowWS_PONG;
     break;
+    default:
+      return InvalidOpcode;
+    break;
   }
+
+  if(bufC[1] & (1 << 7))
+    return Masked;
+
   if(bufC[1] < 126){
     startPos = 2;
     frame->frameLen = 2;
+
     frame->payloadLen = bufC[1];
   }
   else if(bufC[1] == 126){
     startPos = 4;
     frame->frameLen = 4;
+
     uint16_t pLen;
     std::memcpy(&pLen, &bufC[2], 2);
     frame->payloadLen = ntohs(pLen);
   }
-  else{
+  else if(bufC[1] == 127){
     startPos = 10;
     frame->frameLen = 10;
+
     uint64_t pLen;
     std::memcpy(&pLen, &bufC[2], 8);
     #if defined(_AIX) || defined(__sun)
@@ -88,12 +105,16 @@ void Websocket::parseWs(std::string& buf, meowWsFrame* frame, size_t rlen){
     #else
     frame->payloadLen = htole64(pLen);
     #endif
+  } else {
+    return InvalidPLEN;
   }
+
   if(rlen > (frame->frameLen + frame->payloadLen)){
     moreData = std::make_optional(buf.substr(frame->frameLen + frame->payloadLen));
   }
-  buf = buf.substr(startPos, frame->payloadLen);
 
+  buf = buf.substr(startPos, frame->payloadLen);
+  return 0;
 }
 
 template<typename T>
@@ -188,7 +209,11 @@ size_t Websocket::wsRecv(std::string& buf, struct meowWsFrame *frame){
   if(rlen < 1){
     return rlen;
   }
-  parseWs(buf, frame, rlen);
+  if(int a = parseWs(buf, frame, rlen); a != 0){
+    log(ERR, "error from parser " + std::to_string(a));
+    wsClose(1002);
+    throw(meowHttp::Exception("protocol error: " + std::to_string(a), true));
+  }
   return frame->payloadLen;
 }
 
