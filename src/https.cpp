@@ -2,7 +2,6 @@
 #include "includes/client.h"
 #include "includes/enum.h"
 #include <algorithm>
-#include <chrono>
 #include <expected>
 #include <openssl/conf.h>
 #include <openssl/crypto.h>
@@ -91,6 +90,7 @@ std::expected<std::string, enum errors> parseBody(const std::string& meow,
     std::string parsedBuffer;
     std::string_view a = meow;
     a = a.substr(startPos);
+    parsedBuffer.reserve(a.length());
     size_t woof;
     do {
       size_t pos = a.find("\r\n");
