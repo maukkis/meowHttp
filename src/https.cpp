@@ -2,6 +2,7 @@
 #include "includes/client.h"
 #include "includes/enum.h"
 #include <algorithm>
+#include <chrono>
 #include <expected>
 #include <openssl/conf.h>
 #include <openssl/crypto.h>
@@ -11,7 +12,7 @@
 #include <sstream>
 #include <string>
 #include <string_view>
-
+#include <vector>
 
 namespace meowHttp {
 namespace {
@@ -37,7 +38,7 @@ Https &Https::setWriteData(std::string *writeData){
 
 Https &Https::setPostfields(const std::string& post){
   postFields = post;
-  headers.insert({"content-length: ", std::to_string(post.length())});
+  sheaders.insert({"content-length: ", std::to_string(post.length())});
   return *this;
 }
 
@@ -45,7 +46,7 @@ Https &Https::setHeader(const std::string_view header){
   ssize_t colon = header.find(": ");
   const std::string_view key = header.substr(0, colon+2);
   const std::string_view value = header.substr(colon+2);
-  headers[std::string(key)] = std::string(value);
+  sheaders[std::string(key)] = std::string(value);
   return *this;
 }
 
@@ -58,37 +59,46 @@ enum HTTPCODES Https::getLastStatusCode(){
   return static_cast<HTTPCODES>(lastStatusCode);
 }
 
-std::optional<std::string> parseHeaders(std::string& buffer, const std::string& headerToParse){
-  size_t startpos = buffer.find(headerToParse);
-  if (startpos != std::string::npos){
-    startpos += headerToParse.length();
-    size_t endPos = buffer.find("\r\n", startpos);
-    return buffer.substr(startpos, endPos - startpos);
+void parseHeaders(std::string& buffer, 
+                  std::unordered_map<std::string, std::string>& headermap){
+  std::istringstream a{buffer};
+  std::string temp;
+  // skip first line
+  std::getline(a, temp);
+  while(std::getline(a, temp)){
+    std::erase(temp, '\r');
+    size_t pos = temp.find(": ");
+    std::string key = temp.substr(0, pos+2);
+    lowerString(key);
+    std::string value = temp.substr(pos+2);
+    headermap.insert({std::move(key), std::move(value)});
   }
-  return std::nullopt;
 }
 
-std::expected<std::string, enum errors> parseBody(const std::string& meow){
+std::expected<std::string, enum errors> parseBody(const std::string& meow,
+                                                  std::unordered_map<std::string, std::string>& map){
   size_t startPos{meow.find("\r\n\r\n") + strlen("\r\n\r\n")};
-  std::string headers = meow.substr(0, startPos);
-  lowerString(headers);
-  if(auto c = parseHeaders(headers, "content-length: "); c.has_value()){
-    size_t len = std::stoul(*c, nullptr, 10);
+  std::string headers = meow.substr(0, startPos-4);
+  parseHeaders(headers, map);
+  if(map.contains("content-length: ")){
+    size_t len = std::stoul(map["content-length: "], nullptr, 10);
     if(meow.length() - startPos < len){
       return std::unexpected(MissingData);
     }
     return meow.substr(startPos, len);
   }
-  if(auto c = parseHeaders(headers, "transfer-encoding: "); c.has_value() && *c == "chunked"){
+  if(map.contains("transfer-encoding: ") && map["transfer-encoding: "] == "chunked"){
     std::string parsedBuffer;
-    std::string a = meow.substr(startPos);
+    std::string_view a = meow;
+    a = a.substr(startPos);
     size_t woof;
     do {
-      std::string woofs = a.substr(0, a.find("\r\n"));
+      size_t pos = a.find("\r\n");
+      std::string woofs = std::string(a.substr(0, pos));
       woof = std::stoul(woofs, nullptr, 16);
       if(woof < 1) break;
-      parsedBuffer.append(a.substr(a.find("\r\n") + 2, woof));
-      a = a.substr(a.find("\r\n") + 4 + woof); // 4 is here because a chunk is followed by a \r\n which we have to skip over
+      parsedBuffer.append(a.substr(pos + 2, woof));
+      a = a.substr(pos + 4 + woof); // 4 is here because a chunk is followed by a \r\n which we have to skip over
     } while(woof > 0);
     return parsedBuffer;
   }
@@ -112,7 +122,7 @@ meow Https::perform(){
   std::string protocol = url.substr(0, url.find("://"));
   std::string hostname = url.substr(url.find("://") + strlen("://"));
   size_t pathPos = hostname.find("/");
-  headers.insert({"host: ", hostname.substr(0, pathPos)});
+  sheaders.insert({"host: ", hostname.substr(0, pathPos)});
   std::string path;
   if (pathPos != std::string::npos) {
     path = hostname.substr(pathPos); 
@@ -150,7 +160,7 @@ meow Https::perform(){
     request = "POST " + path + " HTTP/1.1\r\n";
   else 
     request = *customMethod + ' ' + path + " HTTP/1.1\r\n";
-  for(auto& a : headers){
+  for(auto& a : sheaders){
     request += a.first + a.second + "\r\n";
   }
   request += "\r\n";
@@ -170,7 +180,7 @@ meow Https::perform(){
   }
   lastStatusCode = parseStatusCode(buffer);
   while(true){
-    auto a = parseBody(buffer);
+    auto a = parseBody(buffer, this->headers);
     if(a.has_value()){
       if(writeData)
         *writeData = a.value();
