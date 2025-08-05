@@ -11,7 +11,7 @@
 #include <sstream>
 #include <string>
 #include <string_view>
-#include <vector>
+
 
 namespace meowHttp {
 namespace {
@@ -96,6 +96,7 @@ std::expected<std::string, enum errors> parseBody(const std::string& meow,
       size_t pos = a.find("\r\n");
       std::string woofs = std::string(a.substr(0, pos));
       woof = std::stoul(woofs, nullptr, 16);
+      if(woof > a.length()) return std::unexpected(MissingData);
       if(woof < 1) break;
       parsedBuffer.append(a.substr(pos + 2, woof));
       a = a.substr(pos + 4 + woof); // 4 is here because a chunk is followed by a \r\n which we have to skip over
@@ -183,7 +184,7 @@ meow Https::perform(){
     auto a = parseBody(buffer, this->headers);
     if(a.has_value()){
       if(writeData)
-        *writeData = a.value();
+        *writeData = std::move(a.value());
       else
         std::cout << a.value();
       break;
