@@ -67,7 +67,7 @@ void parseHeaders(std::string& buffer,
   while(std::getline(a, temp)){
     std::erase(temp, '\r');
     size_t pos = temp.find(": ");
-    std::string key = temp.substr(0, pos+2);
+    std::string key = temp.substr(0, pos);
     lowerString(key);
     std::string value = temp.substr(pos+2);
     headermap.insert({std::move(key), std::move(value)});
@@ -79,14 +79,14 @@ std::expected<std::string, enum errors> parseBody(const std::string& meow,
   size_t startPos{meow.find("\r\n\r\n") + strlen("\r\n\r\n")};
   std::string headers = meow.substr(0, startPos-4);
   parseHeaders(headers, map);
-  if(map.contains("content-length: ")){
-    size_t len = std::stoul(map["content-length: "], nullptr, 10);
+  if(map.contains("content-length")){
+    size_t len = std::stoul(map["content-length"], nullptr, 10);
     if(meow.length() - startPos < len){
       return std::unexpected(MissingData);
     }
     return meow.substr(startPos, len);
   }
-  if(map.contains("transfer-encoding: ") && map["transfer-encoding: "] == "chunked"){
+  if(map.contains("transfer-encoding") && map["transfer-encoding"] == "chunked"){
     std::string parsedBuffer;
     std::string_view a = meow;
     a = a.substr(startPos);
