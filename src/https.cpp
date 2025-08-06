@@ -175,9 +175,15 @@ meow Https::perform(){
   }
   log(INFO, "sent headers");
   std::string buffer;
-  size_t rlen = read(buffer);
-  while(rlen < 1){
-    rlen = read(buffer);
+  // TODO: fix this hacky piece of shit by making sslSocket::read() not fucking throw
+  try {
+    size_t rlen = read(buffer);
+    while(rlen < 1){
+      rlen = read(buffer);
+    }
+  } catch(meowHttp::Exception& e){
+    log(ERR, e.what());
+    return ERR_RECEIVE_FAILED;
   }
   lastStatusCode = parseStatusCode(buffer);
   while(true){
