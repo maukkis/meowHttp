@@ -14,7 +14,7 @@
 #define closeSock(x) ::close(x)
 #include <netdb.h>
 #include <netinet/in.h>
-#include <sys/poll.h>
+#include <poll.h>
 #include <sys/socket.h>
 #include <unistd.h>
 #endif
@@ -240,9 +240,8 @@ meow sslSocket::connect(const std::string& url, const std::string& protocol, siz
   #ifdef WIN32
     WSADATA wsaData;
     int res = WSAStartup(MAKEWORD(2, 2), &wsaData);
-    if(res != 0){
+    if(res != 0)
       return ERR_CONNECT_FAILED;
-    }
   #endif
   sockfd = socket(AF_INET, SOCK_STREAM, 0);
   struct sockaddr_in meow;
