@@ -284,7 +284,7 @@ meow Websocket::perform(){
   std::string request { 
     "GET " + path + " HTTP/1.1"
     "\r\nHost: " + hostname + 
-    "\r\nUser-Agent: meow browser"
+    "\r\nUser-Agent: meowHttp"
     "\r\nAccept: */*"
     "\r\nUpgrade: websocket"
     "\r\nConnection: Upgrade"
