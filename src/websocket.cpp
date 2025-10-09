@@ -15,6 +15,10 @@
 #include <sys/types.h>
 #elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
 #include <sys/endian.h>
+#elif defined(__APPLE__)
+#include <libkern/OSByteOrder.h>
+#define htobe64(x) OSSwapHostToBigInt64(x)
+#define be64toh(x) OSSwapBigToHostInt64(x)
 #endif
 #include <iostream>
 #include <memory>
@@ -102,7 +106,7 @@ int Websocket::parseWs(std::string& buf, meowWsFrame* frame, size_t rlen){
     #if defined(_AIX) || defined(__sun)
     frame->payloadLen = ntohll(pLen);
     #else
-    frame->payloadLen = htole64(pLen);
+    frame->payloadLen = be64toh(pLen);
     #endif
   } else {
     return InvalidPLEN;
