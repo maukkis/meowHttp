@@ -52,9 +52,9 @@ protected:
   void enableLogging(){ bark = true; }
   void close();
   int sockfd;
-  SSL *ssl;
+  SSL *ssl = nullptr;
   bool bark = false;
-  const SSL_METHOD *method;
-  SSL_CTX *ctx;
+  const SSL_METHOD *method = nullptr;
+  SSL_CTX *ctx = nullptr;
 };
 #endif

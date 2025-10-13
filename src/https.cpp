@@ -168,9 +168,14 @@ meow Https::perform(){
   if(postFields){
     request += *postFields;
   }
-  ssize_t sentLen = write(request, request.length());
-  if(sentLen < 1){
-    log(ERR, "failed to send");
+  try {
+    ssize_t sentLen = write(request, request.length());
+    
+    if(sentLen < 1){
+      log(ERR, "failed to send");
+      return ERR_SEND_FAILED;
+    }
+  } catch(meowHttp::Exception&){
     return ERR_SEND_FAILED;
   }
   log(INFO, "sent headers");

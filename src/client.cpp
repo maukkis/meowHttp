@@ -60,7 +60,8 @@ void sslSocket::freeSSL(){
 }
 
 void sslSocket::close(){
-  SSL_shutdown(ssl);
+  if(ssl)
+    SSL_shutdown(ssl);
   this->freeSSL();
   shutdown(sockfd, SHUT_RDWR);
   closeSock(sockfd);
