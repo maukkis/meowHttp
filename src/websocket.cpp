@@ -5,9 +5,9 @@
 #include <cstdlib>
 #include <cstring>
 #include <optional>
-#ifdef WIN32
-#define htole64(x) _byteswap_uint64(x)
+#if defined(WIN32)
 #define htobe64(x) _byteswap_uint64(x)
+#define be64toh(x) _byteswap_uint64(x)
 #endif
 #if defined(__linux__) || defined(__OpenBSD__)
 #include <endian.h>
@@ -254,7 +254,7 @@ meow Websocket::perform(){
   }
   SSL_set_tlsext_host_name(ssl, hostname.c_str());
   SSL_set_fd(ssl, sockfd);
-  size_t nya = SSL_connect(ssl);
+  int nya = SSL_connect(ssl);
   if(nya != 1){
     std::cout << SSL_get_error(ssl, nya) << '\n';
     return ERR_SSL_FAILED;

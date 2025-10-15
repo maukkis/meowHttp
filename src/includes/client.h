@@ -7,6 +7,7 @@
 using in_addr_t = uint32_t;
 #include <windows.h>
 #include <winsock2.h>
+using ssize_t = SSIZE_T;
 #else
 #include <sys/socket.h>
 #include <netinet/in.h>
