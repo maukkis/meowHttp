@@ -13,10 +13,10 @@ if(BUILD_TESTS)
   add_subdirectory(${PROJECT_SOURCE_DIR}/test)
 endif()
 file(GLOB_RECURSE http-client_src "src/*.cpp")
-if(WIN32)
+if(WIN32 AND MSVC)
   # msvc gives stupid warnings that dont really matter and causes this to not compile fuck msvc
   set(CMAKE_CXX_FLAGS_DEBUG "/DEBUG")
-  set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+  set(CMAKE_CXX_FLAGS_RELEASE "/O2")
 else()
   set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -Wextra -Werror")
   set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -Wextra -Werror")
@@ -32,12 +32,14 @@ else()
 endif()
 target_include_directories(meowHttp PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/include>
-  $<INSTALL_INTERFACE:include/meowHttp>)
+  $<INSTALL_INTERFACE:include>)
 
 install(TARGETS meowHttp EXPORT meowHttpTargets DESTINATION lib)
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/src/includes// DESTINATION include/meowHttp)
 include(CMakePackageConfigHelpers)
+
 set(config_dir lib/cmake/meowHttp)
+
 write_basic_package_version_file(
   "${CMAKE_CURRENT_BINARY_DIR}/meowHttp/meowHttpConfigVersion.cmake"
   VERSION ${meowHttp_version}
