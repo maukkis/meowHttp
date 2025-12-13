@@ -120,19 +120,26 @@ size_t parseStatusCode(std::string_view meow){
 
 meow Https::perform(){
   // parse url
+  int port = 443;
   std::string protocol = url.substr(0, url.find("://"));
   std::string hostname = url.substr(url.find("://") + strlen("://"));
   size_t pathPos = hostname.find("/");
-  sheaders.insert({"host: ", hostname.substr(0, pathPos)});
   std::string path;
   if (pathPos != std::string::npos) {
+    sheaders.insert({"host: ", hostname.substr(0, pathPos)});
     path = hostname.substr(pathPos); 
     hostname = hostname.substr(0, hostname.length() - path.length());
   } 
   else {
+    sheaders.insert({"host: ", hostname});
     path = '/';
   }
-  if(connect(hostname, protocol) != OK){
+  if(size_t pos = hostname.find(":"); pos != std::string::npos){
+    std::string portStr = hostname.substr(hostname.find(":")+1);
+    hostname = hostname.substr(0, hostname.find(":"));
+    port = std::stoi(portStr);
+  }
+  if(connect(hostname, protocol, port) != OK){
     log(ERR, "failed to connect");
     return ERR_CONNECT_FAILED;
   }

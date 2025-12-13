@@ -232,6 +232,7 @@ size_t parseStatusCode(std::string_view meow){
 }
 meow Websocket::perform(){
   // parse url
+  int port = 443;
   std::string protocol = url.substr(0, url.find("://"));
   std::string hostname = url.substr(url.find("://") + strlen("://"));
   size_t pathPos = hostname.find("/");
@@ -243,7 +244,12 @@ meow Websocket::perform(){
   else {
     path = '/';
   }
-  if(connect(hostname, protocol) != OK){
+  if(size_t pos = hostname.find(":"); pos != std::string::npos){
+    std::string portStr = hostname.substr(hostname.find(":")+1);
+    hostname = hostname.substr(0, hostname.find(":"));
+    port = std::stoi(portStr);
+  }
+  if(connect(hostname, protocol, port) != OK){
     log(ERR, "failed to connect");
     return ERR_CONNECT_FAILED;
   }
