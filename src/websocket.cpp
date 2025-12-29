@@ -249,20 +249,21 @@ meow Websocket::perform(){
     hostname = hostname.substr(0, hostname.find(":"));
     port = std::stoi(portStr);
   }
+  if(initializeSsl() != OK){
+    log(ERR, "failed to initializeSsl");
+    return ERR_SSL_FAILED;
+  }
   if(connect(hostname, protocol, port) != OK){
     log(ERR, "failed to connect");
     return ERR_CONNECT_FAILED;
   }
   log(INFO, "connected");
-  if(initializeSsl() != OK){
-    log(ERR, "failed to initializeSsl");
-    return ERR_SSL_FAILED;
-  }
   SSL_set_tlsext_host_name(ssl, hostname.c_str());
   SSL_set_fd(ssl, sockfd);
   int nya = SSL_connect(ssl);
   if(nya != 1){
     std::cout << SSL_get_error(ssl, nya) << '\n';
+    close();
     return ERR_SSL_FAILED;
   }
   if (!BIO_socket_nbio(sockfd, 1)) {
@@ -276,6 +277,7 @@ meow Websocket::perform(){
   int rc = RAND_bytes(nonce, sizeof(nonce));
   if(rc != 1){
     log(ERR, "failed to generate nonce");
+    close();
     return ERR_SSL_FAILED;
   }
   BIO *b64 = BIO_new(BIO_f_base64());
@@ -309,6 +311,7 @@ meow Websocket::perform(){
       return ERR_SEND_FAILED;
     }
   } catch(meowHttp::Exception& e){
+    close();
     return ERR_SEND_FAILED;
   }
   try {
@@ -328,8 +331,10 @@ meow Websocket::perform(){
   }
   catch(meowHttp::Exception& e){
     log(ERR, e.what());
+    close();
     return ERR_RECEIVE_FAILED;
   }
+  close();
   return ERR_CONNECT_FAILED;
 }
 

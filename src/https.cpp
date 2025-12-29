@@ -153,6 +153,7 @@ meow Https::perform(){
   size_t nya = SSL_connect(ssl);
   if(nya != 1){
     std::cout << SSL_get_error(ssl, nya) << '\n';
+    freeSSL();
     return ERR_SSL_FAILED;
   }
   if (!BIO_socket_nbio(sockfd, 1)) {
