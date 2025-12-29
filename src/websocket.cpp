@@ -231,6 +231,7 @@ size_t parseStatusCode(std::string_view meow){
   return httpStatusCode; 
 }
 meow Websocket::perform(){
+  if(ssl) close();
   // parse url
   int port = 443;
   std::string protocol = url.substr(0, url.find("://"));
@@ -311,7 +312,6 @@ meow Websocket::perform(){
       return ERR_SEND_FAILED;
     }
   } catch(meowHttp::Exception& e){
-    close();
     return ERR_SEND_FAILED;
   }
   try {
@@ -331,7 +331,6 @@ meow Websocket::perform(){
   }
   catch(meowHttp::Exception& e){
     log(ERR, e.what());
-    close();
     return ERR_RECEIVE_FAILED;
   }
   close();

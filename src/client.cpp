@@ -55,6 +55,8 @@ void sslSocket::freeSSL(){
     SSL_CTX_free(ctx);
     SSL_free(ssl);
     ssl = nullptr;
+    ctx = nullptr;
+    method = nullptr;
   }
 }
 
@@ -67,7 +69,8 @@ void sslSocket::close(){
 }
 
 ssize_t sslSocket::read(std::string& buf){
-  size_t recv;
+  if(!ssl) throw meowHttp::Exception("already closed");
+  size_t recv = 0;
   size_t meow = 0; 
   bool bark;
   struct pollfd pfd[2];
@@ -135,6 +138,7 @@ ssize_t sslSocket::read(std::string& buf){
 }
 
 ssize_t sslSocket::write(const std::string& data, ssize_t buffersize){
+  if(!ssl) throw meowHttp::Exception("already closed");
   ssize_t sent = 0;
   while(sent < buffersize){
     struct pollfd pfd[2];
@@ -183,6 +187,7 @@ ssize_t sslSocket::write(const std::string& data, ssize_t buffersize){
 }
 
 ssize_t sslSocket::write(const void* data, ssize_t buffersize){
+  if(!ssl) throw meowHttp::Exception("already closed");
   ssize_t sent = 0;
   while(sent < buffersize){
     struct pollfd pfd[2];

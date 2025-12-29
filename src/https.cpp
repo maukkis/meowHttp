@@ -119,6 +119,7 @@ size_t parseStatusCode(std::string_view meow){
 }
 
 meow Https::perform(){
+  if(ssl) close();
   // parse url
   int port = 443;
   std::string protocol = url.substr(0, url.find("://"));
