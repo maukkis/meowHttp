@@ -303,21 +303,32 @@ meow Websocket::perform(){
   };
   free(b64Nonce);
   // send the request
-  if(write(request, request.length()) < 1){
-    log(ERR, "failed to send a request");
+  try {
+    if(write(request, request.length()) < 1){
+      log(ERR, "failed to send a request");
+      return ERR_SEND_FAILED;
+    }
+  } catch(meowHttp::Exception& e){
     return ERR_SEND_FAILED;
   }
-  std::string buf;
-  size_t rlen = read(buf);
-  while(rlen < 1){
-    rlen = read(buf);
-  }
-  if(parseStatusCode(buf) == SWITCHING_PROTOCOLS){
-    if(buf.find("\r\n\r\n") + strlen("\r\n\r\n") >= buf.length()){
+  try {
+
+    std::string buf;
+    size_t rlen = read(buf);
+    while(rlen < 1){
+      rlen = read(buf);
+    }
+    if(parseStatusCode(buf) == SWITCHING_PROTOCOLS){
+      if(buf.find("\r\n\r\n") + strlen("\r\n\r\n") >= buf.length()){
+        return OK;
+      }
+      moreData = std::make_optional(buf.substr(buf.find("\r\n\r\n") + 4));
       return OK;
     }
-    moreData = std::make_optional(buf.substr(buf.find("\r\n\r\n") + 4));
-    return OK;
+  }
+  catch(meowHttp::Exception& e){
+    log(ERR, e.what());
+    return ERR_RECEIVE_FAILED;
   }
   return ERR_CONNECT_FAILED;
 }

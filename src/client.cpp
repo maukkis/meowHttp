@@ -1,5 +1,4 @@
 #include "includes/client.h"
-#include <cerrno>
 #include <cstring>
 #include <openssl/evp.h>
 #include <openssl/ssl.h>
