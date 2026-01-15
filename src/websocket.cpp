@@ -66,6 +66,9 @@ int Websocket::parseWs(std::string& buf, meowWsFrame* frame, size_t rlen){
     case 0x81:
       frame->opcode = meowWS_TEXT;
     break;
+    case 0x82:
+      frame->opcode = meowWS_BINARY;
+    break;
     case 0x88:
       frame->opcode = meowWS_CLOSE;
     break;
@@ -127,6 +130,9 @@ std::unique_ptr<Frame> constructFrame(const T* payload, opcodes opCode, size_t p
   switch(opCode){
     case meowWS_TEXT:
       frame[0] = 0x81; // fuck you we arent only sending text 
+    break;
+    case meowWS_BINARY:
+      frame[0] = 0x82;
     break;
     case meowWS_PING:
       frame[0] = 0x89; //set the payload to a ping

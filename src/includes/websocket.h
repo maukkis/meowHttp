@@ -9,6 +9,7 @@ namespace meowWs {
 
 enum opcodes{
   meowWS_TEXT,
+  meowWS_BINARY,
   meowWS_PING,
   meowWS_CLOSE,
   meowWS_PONG,
