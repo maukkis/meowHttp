@@ -138,7 +138,7 @@ ssize_t sslSocket::read(std::string& buf){
 }
 
 ssize_t sslSocket::readTillClosed(std::string& buf){
-  if(!ssl) throw meowHttp::Exception("already closed");
+  if(!ssl) return 0;
   size_t recv = 0;
   size_t meow = 0; 
   bool bark;
@@ -190,7 +190,8 @@ ssize_t sslSocket::readTillClosed(std::string& buf){
         pfd[0].revents & POLLERR || 
         pfd[0].revents & POLLNVAL
       ){
-        close();
+        freeSSL();
+        closeSock(sockfd);
         break;
       }
     }
@@ -198,7 +199,6 @@ ssize_t sslSocket::readTillClosed(std::string& buf){
       break;
     }
     else if(ret < 0){
-      throw(meowHttp::Exception("internal poll error", false));
       break;
     }
   }

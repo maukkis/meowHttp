@@ -8,6 +8,7 @@
 #include <openssl/ssl.h>
 #include <iostream>
 #include <optional>
+#include <print>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -200,28 +201,29 @@ meow Https::perform(){
     while(rlen < 1){
       rlen = read(buffer);
     }
+    lastStatusCode = parseStatusCode(buffer);
+    bool readAll = false;
+    while(true){
+      auto a = parseBody(buffer, this->headers, readAll);
+      if(a.has_value()){
+        if(writeData)
+          *writeData = std::move(a.value());
+        else
+          std::cout << a.value();
+        break;
+      }
+      if(a.error() == MissingData){
+        read(buffer);
+      }
+      else if(a.error() == ReadTillClosed){
+        readTillClosed(buffer);
+        readAll = true;
+      }
+    }
   } catch(meowHttp::Exception& e){
     log(ERR, e.what());
+    std::println("{}", e.what());
     return ERR_RECEIVE_FAILED;
-  }
-  lastStatusCode = parseStatusCode(buffer);
-  bool readAll = false;
-  while(true){
-    auto a = parseBody(buffer, this->headers, readAll);
-    if(a.has_value()){
-      if(writeData)
-        *writeData = std::move(a.value());
-      else
-        std::cout << a.value();
-      break;
-    }
-    if(a.error() == MissingData){
-      read(buffer);
-    }
-    else if(a.error() == ReadTillClosed){
-      readTillClosed(buffer);
-      readAll = true;
-    }
   }
   if(postFields){
     postFields->resize(0);

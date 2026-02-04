@@ -25,6 +25,7 @@ private:
   size_t lastStatusCode;
   std::unordered_map<std::string, std::string> sheaders{
     {"accept: ", "*/*"},
+    {"connection:", "close"},
     {"user-agent: ", "meowHttp"},
   };
   std::optional<std::string> customMethod;
