@@ -99,6 +99,7 @@ std::expected<std::string, enum errors> parseBody(const std::string& meow,
     size_t woof;
     do {
       size_t pos = a.find("\r\n");
+      if(pos == std::string::npos) return std::unexpected(MissingData);
       std::string woofs = std::string(a.substr(0, pos));
       woof = std::stoul(woofs, nullptr, 16);
       if(woof > a.length()) return std::unexpected(MissingData);
