@@ -40,6 +40,7 @@ namespace {
     Masked = 1,
     InvalidOpcode,
     InvalidPLEN,
+    NotEnoughData,
   };
 }
 
@@ -61,7 +62,8 @@ struct Frame{
 
 
 int Websocket::parseWs(std::string& buf, meowWsFrame* frame, size_t rlen){
-  size_t startPos;
+  if(rlen < 10) return NotEnoughData;
+  size_t startPos{};
   switch(static_cast<uint8_t>(buf.at(0))){
     case 0x81:
       frame->opcode = meowWS_TEXT;
@@ -115,6 +117,7 @@ int Websocket::parseWs(std::string& buf, meowWsFrame* frame, size_t rlen){
     return InvalidPLEN;
   }
 
+  if(rlen < frame->payloadLen) return NotEnoughData;
   if(rlen > (frame->frameLen + frame->payloadLen)){
     moreData = std::make_optional(buf.substr(frame->frameLen + frame->payloadLen));
   }
@@ -218,10 +221,17 @@ size_t Websocket::wsRecv(std::string& buf, struct meowWsFrame *frame){
   if(rlen < 1){
     return rlen;
   }
-  if(int a = parseWs(buf, frame, rlen); a != 0){
-    log(ERR, "error from parser " + std::to_string(a));
-    wsClose(1002);
-    throw(meowHttp::Exception("protocol error: " + std::to_string(a), true));
+  int a = 1;
+  while(a != 0){
+    if(a = parseWs(buf, frame, rlen); a != 0){
+      if(a == NotEnoughData){
+        rlen += read(buf);
+        continue;
+      }
+      log(ERR, "error from parser " + std::to_string(a));
+      wsClose(1002);
+      throw(meowHttp::Exception("protocol error: " + std::to_string(a), true));
+    }
   }
   return frame->payloadLen;
 }

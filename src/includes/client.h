@@ -46,6 +46,7 @@ protected:
   in_addr_t resolveHostName(const std::string& hostname, const std::string& protocol);
   meow connect(const std::string& url, const std::string& protocol, size_t port = 443);
   ssize_t read(std::string& buf);
+  ssize_t readTillClosed(std::string& buf);
   ssize_t write(const std::string& data, ssize_t buffersize);
   ssize_t write(const void* data, ssize_t buffersize);
   void log(enum log meow, const std::string& message);

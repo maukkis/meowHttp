@@ -16,7 +16,8 @@
 namespace meowHttp {
 namespace {
 enum errors {
-  MissingData
+  MissingData,
+  ReadTillClosed,
 };
 void lowerString(std::string& a){
   std::transform(a.begin(), a.end(), a.begin(), [](char c){
@@ -75,8 +76,11 @@ void parseHeaders(std::string& buffer,
 }
 
 std::expected<std::string, enum errors> parseBody(const std::string& meow,
-                                                  std::unordered_map<std::string, std::string>& map){
-  size_t startPos{meow.find("\r\n\r\n") + strlen("\r\n\r\n")};
+                                                  std::unordered_map<std::string, std::string>& map,
+                                                  bool readAll = false){
+  auto end = meow.find("\r\n\r\n");
+  if(end == std::string::npos) return std::unexpected(MissingData);
+  size_t startPos{end + 4};
   std::string headers = meow.substr(0, startPos-4);
   parseHeaders(headers, map);
   if(map.contains("content-length")){
@@ -103,6 +107,7 @@ std::expected<std::string, enum errors> parseBody(const std::string& meow,
     } while(woof > 0);
     return parsedBuffer;
   }
+  if(!readAll) return std::unexpected(ReadTillClosed);
   return meow.substr(startPos);
 }
 
@@ -200,8 +205,9 @@ meow Https::perform(){
     return ERR_RECEIVE_FAILED;
   }
   lastStatusCode = parseStatusCode(buffer);
+  bool readAll = false;
   while(true){
-    auto a = parseBody(buffer, this->headers);
+    auto a = parseBody(buffer, this->headers, readAll);
     if(a.has_value()){
       if(writeData)
         *writeData = std::move(a.value());
@@ -211,6 +217,10 @@ meow Https::perform(){
     }
     if(a.error() == MissingData){
       read(buffer);
+    }
+    else if(a.error() == ReadTillClosed){
+      readTillClosed(buffer);
+      readAll = true;
     }
   }
   if(postFields){
