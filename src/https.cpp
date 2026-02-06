@@ -2,6 +2,7 @@
 #include "includes/client.h"
 #include "includes/enum.h"
 #include <algorithm>
+#include <exception>
 #include <expected>
 #include <openssl/conf.h>
 #include <openssl/crypto.h>
@@ -97,16 +98,21 @@ std::expected<std::string, enum errors> parseBody(const std::string& meow,
     a = a.substr(startPos);
     parsedBuffer.reserve(a.length());
     size_t woof;
-    do {
-      size_t pos = a.find("\r\n");
-      if(pos == std::string::npos) return std::unexpected(MissingData);
-      std::string woofs = std::string(a.substr(0, pos));
-      woof = std::stoul(woofs, nullptr, 16);
-      if(woof > a.length()) return std::unexpected(MissingData);
-      if(woof < 1) break;
-      parsedBuffer.append(a.substr(pos + 2, woof));
-      a = a.substr(pos + 4 + woof); // 4 is here because a chunk is followed by a \r\n which we have to skip over
-    } while(woof > 0);
+    try {
+      do {
+        size_t pos = a.find("\r\n");
+        if(pos == std::string::npos) return std::unexpected(MissingData);
+        std::string woofs = std::string(a.substr(0, pos));
+        woof = std::stoul(woofs, nullptr, 16);
+        if(woof > a.length() - 2) return std::unexpected(MissingData);
+        if(woof + 2 > a.length()) return std::unexpected(MissingData);
+        if(woof < 1) break;
+        parsedBuffer.append(a.substr(pos + 2, woof));
+        a = a.substr(pos + 4 + woof); // 4 is here because a chunk is followed by a \r\n which we have to skip over
+      } while(woof > 0);
+    } catch(std::exception& e){
+      return std::unexpected(MissingData);
+    }
     return parsedBuffer;
   }
   if(!readAll) return std::unexpected(ReadTillClosed);
