@@ -127,7 +127,7 @@ ssize_t sslSocket::read(std::string& buf){
     }
   }
   else if (ret == 0){
-    return 0;
+    return meow;
   }
   else if(ret < 0){
     throw(meowHttp::Exception("internal poll error", false));
