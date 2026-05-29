@@ -117,7 +117,7 @@ int Websocket::parseWs(std::string& buf, meowWsFrame* frame, size_t rlen){
     return InvalidPLEN;
   }
 
-  if(rlen < frame->payloadLen) return NotEnoughData;
+  if(rlen < (frame->frameLen +frame->payloadLen)) return NotEnoughData;
   if(rlen > (frame->frameLen + frame->payloadLen)){
     moreData = std::make_optional(buf.substr(frame->frameLen + frame->payloadLen));
   }
