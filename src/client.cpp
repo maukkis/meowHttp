@@ -74,65 +74,63 @@ ssize_t sslSocket::read(std::string& buf){
   size_t meow = 0; 
   bool bark;
   struct pollfd pfd[2];
-  while(true){
-    pfd[0].fd = sockfd;
-    pfd[0].events = POLLIN;
-    pfd[1].events = 0;
-    int ret = poll(pfd, 1, 5); //check if fd is readable this prevents receiving partial data
-    if(ret > 0){
-      if(pfd[0].revents & POLLIN){ // if fd is readable read from it till we get an error
-        do{
-          char buff[8192];
-          bark = false;
-          recv = SSL_read(ssl, buff, 8192);
-          int woof = SSL_get_error(ssl, recv);
-          switch(woof){
-            case SSL_ERROR_NONE:
-              if (recv > 0){
-                buf.append(buff, recv);
-                meow += recv;
-                continue;
-              }
-            break;
-            case SSL_ERROR_ZERO_RETURN:
-              close();
-              return meow;
-            break;
-            case SSL_ERROR_WANT_READ:
-              bark = true;
-            break;
-            case SSL_ERROR_SSL:
-            case SSL_ERROR_SYSCALL:
-              freeSSL();
-              closeSock(sockfd);
-              return meow;
-            default:
-              int error = SSL_get_error(ssl,recv);
-              std::cout << "error: " << error << '\n';
-              close();
-              throw(meowHttp::Exception("openssl error", true));
-              return meow;
-            break;
-          }
-        } while(SSL_pending(ssl) && !bark);
-      }
-      else if(
-        pfd[0].revents & POLLHUP ||
-        pfd[0].revents & POLLERR || 
-        pfd[0].revents & POLLNVAL
-      ){
-        close();
-        throw(meowHttp::Exception("connection closed", true));
-        break;
-      }
+  pfd[0].fd = sockfd;
+  pfd[0].events = POLLIN;
+  pfd[1].events = 0;
+  int ret = poll(pfd, 1, 5); //check if fd is readable this prevents receiving partial data
+  if(ret > 0){
+    if(pfd[0].revents & POLLIN){ // if fd is readable read from it till we get an error
+      do{
+        char buff[8192];
+        bark = false;
+        recv = SSL_read(ssl, buff, 8192);
+        int woof = SSL_get_error(ssl, recv);
+        switch(woof){
+          case SSL_ERROR_NONE:
+            if (recv > 0){
+              buf.append(buff, recv);
+              meow += recv;
+              continue;
+            }
+          break;
+          case SSL_ERROR_ZERO_RETURN:
+            close();
+            return meow;
+          break;
+          case SSL_ERROR_WANT_READ:
+            bark = true;
+          break;
+          case SSL_ERROR_SSL:
+          case SSL_ERROR_SYSCALL:
+            freeSSL();
+            closeSock(sockfd);
+            return meow;
+          default:
+            int error = SSL_get_error(ssl,recv);
+            std::cout << "error: " << error << '\n';
+            close();
+            throw(meowHttp::Exception("openssl error", true));
+            return meow;
+          break;
+        }
+      } while(SSL_pending(ssl) && !bark);
     }
-    else if (ret == 0){
-      break;
+    else if(
+      pfd[0].revents & POLLHUP ||
+      pfd[0].revents & POLLERR || 
+      pfd[0].revents & POLLNVAL
+    ){
+      close();
+      throw(meowHttp::Exception("connection closed", true));
+      return 0;
     }
-    else if(ret < 0){
-      throw(meowHttp::Exception("internal poll error", false));
-      break;
-    }
+  }
+  else if (ret == 0){
+    return 0;
+  }
+  else if(ret < 0){
+    throw(meowHttp::Exception("internal poll error", false));
+    return 0;
   }
   return meow;
 }
